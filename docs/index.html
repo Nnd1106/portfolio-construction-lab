@@ -547,7 +547,110 @@
 
   <!-- ============ 06 GOALS ============ -->
   <section class="tab-panel" id="panel-goals" role="tabpanel" aria-labelledby="tab-goals" hidden>
-    <p class="section-intro">Module in progress.</p>
+    <p class="section-intro">
+      Goals-based planning: given a lump sum, a monthly SIP with an annual step-up, and a target in today's rupees, the browser
+      simulates <strong>5,000 monthly return paths</strong> from the client portfolio's expected return and volatility and reports the
+      <strong>probability of reaching the goal</strong>, the range of outcomes, and the SIP needed to reach it with a chosen confidence.
+    </p>
+    <div class="panel-grid">
+      <div>
+        <div class="card">
+          <h2 class="card-title">Goal</h2>
+          <div class="preset-row" style="margin:0 0 14px" id="goal-presets">
+            <button type="button" class="preset-btn" data-preset="retire">Retirement corpus</button>
+            <button type="button" class="preset-btn" data-preset="edu">Child's education</button>
+            <button type="button" class="preset-btn" data-preset="home">Home down payment</button>
+          </div>
+          <div class="control-group">
+            <label class="field-label" for="goal-amount">Target (today's ₹)</label>
+            <input type="number" class="text-input" id="goal-amount" min="0" step="100000" value="10000000" />
+          </div>
+          <div class="control-group">
+            <div class="control-label"><span>Horizon</span><span class="value" id="goal-years-val">—</span></div>
+            <input type="range" id="goal-years" min="1" max="40" step="1" value="8" aria-label="Horizon in years" />
+            <div class="range-scale"><span>1 yr</span><span>40 yrs</span></div>
+            <p class="legend-note" id="goal-years-note"></p>
+          </div>
+          <div class="control-group">
+            <div class="control-label"><span>Expected inflation</span><span class="value" id="goal-infl-val">—</span></div>
+            <input type="range" id="goal-infl" min="0" max="0.1" step="0.0025" value="0.05" aria-label="Expected inflation" />
+            <div class="range-scale"><span>0%</span><span>10%</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <h2 class="card-title">Contributions</h2>
+          <div class="control-group">
+            <label class="field-label" for="goal-initial">Initial investment (₹)</label>
+            <input type="number" class="text-input" id="goal-initial" min="0" step="50000" value="1500000" />
+          </div>
+          <div class="control-group">
+            <label class="field-label" for="goal-sip">Monthly SIP (₹)</label>
+            <input type="number" class="text-input" id="goal-sip" min="0" step="1000" value="65000" />
+          </div>
+          <div class="control-group">
+            <div class="control-label"><span>Annual SIP step-up</span><span class="value" id="goal-step-val">—</span></div>
+            <input type="range" id="goal-step" min="0" max="0.15" step="0.01" value="0.05" aria-label="Annual SIP step-up" />
+            <div class="range-scale"><span>0%</span><span>15%</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <h2 class="card-title">Return Assumptions</h2>
+          <div class="control-group">
+            <div class="control-label"><span>Expected return (annual)</span><span class="value" id="goal-mu-val">—</span></div>
+            <input type="range" id="goal-mu" min="0.02" max="0.2" step="0.0025" aria-label="Expected annual return" />
+          </div>
+          <div class="control-group">
+            <div class="control-label"><span>Volatility (annual)</span><span class="value" id="goal-sigma-val">—</span></div>
+            <input type="range" id="goal-sigma" min="0.01" max="0.3" step="0.0025" aria-label="Annual volatility" />
+          </div>
+          <p class="legend-note" id="goal-ret-src"></p>
+          <div class="btn-group">
+            <button type="button" class="btn" id="goal-reset-ret">Use client portfolio</button>
+            <button type="button" class="btn" id="goal-reseed">New random seed</button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="stat-row" id="goal-stats"></div>
+        <div class="card">
+          <h2 class="card-title">Projected Wealth — Fan Chart</h2>
+          <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+            <div class="legend-row" id="goal-fan-legend" style="margin:0"></div>
+            <label class="check-row" style="margin:0"><input type="checkbox" id="goal-real" /> Show in today's ₹ (real)</label>
+          </div>
+          <div class="chart-wrap tall" style="margin-top:10px"><canvas id="chart-goal-fan" role="img" aria-label="Monte Carlo fan chart of projected wealth"></canvas></div>
+        </div>
+        <div class="chart-row two-col" style="margin-top:16px">
+          <div class="card">
+            <h2 class="card-title">Probability of Success by Year</h2>
+            <p class="chart-tip">Share of paths at or above the inflation-adjusted target if the goal fell due in that year.</p>
+            <div class="chart-wrap short"><canvas id="chart-goal-prob" role="img" aria-label="Probability of reaching the goal by year"></canvas></div>
+          </div>
+          <div class="card">
+            <h2 class="card-title">What It Takes</h2>
+            <div class="control-group">
+              <div class="control-label"><span>Required confidence</span><span class="value" id="goal-conf-val">—</span></div>
+              <input type="range" id="goal-conf" min="0.5" max="0.95" step="0.05" value="0.8" aria-label="Required confidence" />
+            </div>
+            <ul class="note-list" id="goal-what"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <details class="method">
+      <summary>Method — the simulation</summary>
+      <p>Annual arithmetic expected return μ and volatility σ default to the client's complete portfolio from Module 2 (ex-ante,
+        policy or textbook model as selected). They are converted to lognormal parameters by moment matching so that the
+        simulated simple returns have exactly that mean and variance:</p>
+      <div class="formula">σ<sub>ln</sub>² = ln(1 + σ²/(1+μ)²),&nbsp;&nbsp; m<sub>ln</sub> = ln(1+μ) − σ<sub>ln</sub>²/2,&nbsp;&nbsp; monthly: r<sub>t</sub> ~ N(m<sub>ln</sub>/12, σ<sub>ln</sub>²/12)</div>
+      <p>Each month the SIP is added at the start and the balance compounds by e<sup>r<sub>t</sub></sup>; the SIP steps up once a year.
+        The target is inflated to nominal rupees at the chosen inflation rate. Because terminal wealth on each path is linear in the SIP,
+        W<sub>T</sub> = a<sub>i</sub> + SIP·b<sub>i</sub>, the SIP that reaches the goal with confidence q is solved exactly as the q-quantile of
+        per-path break-even SIPs (G − a<sub>i</sub>)/b<sub>i</sub>. Returns are i.i.d. — no regime shifts, fat tails or sequence-of-return
+        clustering — and the 5,000 paths use a seeded PRNG so results are reproducible.</p>
+    </details>
   </section>
 
 </main>
@@ -567,6 +670,7 @@
 <script src="assets/js/risk.js"></script>
 <script src="assets/js/performance.js"></script>
 <script src="assets/js/rebalance.js"></script>
+<script src="assets/js/goals.js"></script>
 <script src="assets/js/main.js"></script>
 </body>
 </html>
