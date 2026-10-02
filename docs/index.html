@@ -142,7 +142,98 @@
 
   <!-- ============ 02 ALLOCATION ============ -->
   <section class="tab-panel" id="panel-allocation" role="tabpanel" aria-labelledby="tab-allocation" hidden>
-    <p class="section-intro">Module in progress.</p>
+    <p class="section-intro">
+      Strategic asset allocation across five sleeves in INR. The pipeline solves the long-only mean-variance problem
+      (SciPy SLSQP) along the full <strong>N-asset efficient frontier</strong>, finds the <strong>Minimum Variance Portfolio</strong>
+      and the tangency <strong>Optimal Risky Portfolio</strong>, and the browser places the client on the
+      <strong>Capital Allocation Line</strong> using their risk aversion A.
+    </p>
+    <div class="panel-grid">
+      <div>
+        <div class="card">
+          <h2 class="card-title">Engine Settings</h2>
+          <div class="control-group">
+            <div class="control-label"><span>Expected-return model</span></div>
+            <div class="seg" role="group" aria-label="Expected-return model">
+              <button type="button" data-model="policy">Policy</button>
+              <button type="button" data-model="textbook">Textbook</button>
+            </div>
+            <p class="legend-note" id="alloc-model-note"></p>
+          </div>
+          <div class="control-group">
+            <div class="control-label"><span>Risk aversion A</span><span class="value" id="alloc-A-val">—</span></div>
+            <input type="range" id="alloc-A" min="1" max="15" step="0.1" aria-label="Risk aversion coefficient A" />
+            <div class="range-scale"><span>1 · aggressive</span><span>15 · very conservative</span></div>
+            <p class="legend-note" id="alloc-A-src"></p>
+          </div>
+          <div class="control-group">
+            <label class="check-row"><input type="checkbox" id="alloc-borrow" /> Allow borrowing (kinked CAL)</label>
+            <div id="alloc-spread-wrap" style="margin-top:10px">
+              <div class="control-label"><span>Borrowing spread over rf</span><span class="value" id="alloc-spread-val">—</span></div>
+              <input type="range" id="alloc-spread" min="0" max="0.06" step="0.0025" aria-label="Borrowing spread over the risk-free rate" />
+              <div class="range-scale"><span>0%</span><span>6%</span></div>
+            </div>
+          </div>
+          <div class="control-group">
+            <label class="check-row"><input type="checkbox" id="alloc-compare" checked /> Overlay the other model's frontier</label>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title">Key Portfolios</h2>
+          <div class="stat-row" style="grid-template-columns:1fr" id="alloc-stats"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2 class="card-title">Efficient Frontier &amp; Capital Allocation Line</h2>
+          <div class="legend-row" id="alloc-legend"></div>
+          <div class="chart-wrap tall"><canvas id="chart-frontier" aria-label="Efficient frontier chart" role="img"></canvas></div>
+          <p class="legend-note">x-axis: annualized volatility · y-axis: annualized expected return (INR). Hover any point for its weights.</p>
+        </div>
+
+        <div class="chart-row two-col" style="margin-top:16px">
+          <div class="card">
+            <h2 class="card-title">Portfolio Weights</h2>
+            <div class="table-scroll"><table class="data-table" id="alloc-weights"></table></div>
+          </div>
+          <div class="card">
+            <h2 class="card-title">Frontier Transition Map</h2>
+            <p class="chart-tip">How the optimal mix shifts as you move along the frontier from MVP to maximum return.</p>
+            <div class="legend-row" id="alloc-tmap-legend"></div>
+            <div class="chart-wrap short"><canvas id="chart-tmap" aria-label="Frontier composition by volatility" role="img"></canvas></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <h2 class="card-title">Estimation Inputs</h2>
+          <div class="table-scroll"><table class="data-table" id="alloc-inputs"></table></div>
+          <div class="callout" id="alloc-bs-note"></div>
+        </div>
+      </div>
+    </div>
+
+    <details class="method">
+      <summary>Method — optimization, shrinkage and the complete portfolio</summary>
+      <p><strong>Inputs.</strong> Weekly (Friday-close) INR returns over the common window; USD sleeves converted at USDINR, unhedged.
+        Weekly sampling avoids the non-synchronous close problem (NSE closes ~10:00 UTC, US ~20:00 UTC), which biases daily
+        cross-market correlations toward zero. Means and covariances are annualized ×52.</p>
+      <p><strong>Policy model.</strong> Sample means are shrunk with the Bayes-Stein estimator (Jorion, 1986) toward the mean
+        of the global minimum-variance portfolio, and every sleeve is bounded to a 5–50% policy range, as an IPS would.</p>
+      <div class="formula">μ<sub>BS</sub> = (1 − φ)·μ̂ + φ·μ<sub>0</sub>·1,&nbsp;&nbsp; φ = (N+2) / [(N+2) + T·(μ̂ − μ<sub>0</sub>1)′ Σ̂<sup>−1</sup> (μ̂ − μ<sub>0</sub>1)]</div>
+      <p><strong>Textbook model.</strong> Raw sample means, long-only, weights in [0, 1] — the classroom formulation, shown
+        for contrast. Its corner solutions illustrate why practitioners shrink estimates and impose ranges.</p>
+      <p><strong>Frontier.</strong> For 120 target returns between the MVP and the maximum-return portfolio the pipeline
+        solves <code>min w′Σw</code> s.t. <code>w′μ = target, Σw = 1, bounds</code>. The ORP maximizes
+        <code>(w′μ − r<sub>f</sub>) / √(w′Σw)</code> (12 random restarts). Validation gates fail the pipeline if weights
+        do not sum to 1, the frontier is non-concave, or any grid point beats the ORP's Sharpe ratio.</p>
+      <p><strong>Complete portfolio.</strong> <code>y* = (E[r<sub>P</sub>] − r<sub>f</sub>) / (A·σ<sub>P</sub>²)</code>. If y* ≤ 1 the client
+        lends at r<sub>f</sub>. If y* &gt; 1 and borrowing is off, the client stays fully invested and moves up the frontier to
+        the point maximizing U = E[r] − ½Aσ². With borrowing at r<sub>B</sub> = r<sub>f</sub> + spread, the efficient set is
+        the kinked CAL: lending line → frontier → borrowing line tangent from r<sub>B</sub> (leverage capped at 1.5×).</p>
+      <p><strong>Risk-free rate.</strong> Trailing 12-month return of a growth-option liquid-fund NAV, which tracks 91-day T-bill yields.</p>
+    </details>
   </section>
 
   <!-- ============ 03 RISK & STRESS ============ -->
@@ -178,6 +269,7 @@
 <script src="assets/js/utils.js"></script>
 <script src="assets/js/state.js"></script>
 <script src="assets/js/profile.js"></script>
+<script src="assets/js/allocation.js"></script>
 <script src="assets/js/main.js"></script>
 </body>
 </html>
