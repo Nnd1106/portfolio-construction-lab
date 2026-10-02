@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Portfolio Construction Lab — Multi-Asset Wealth Platform</title>
+<meta name="description" content="Multi-asset portfolio construction platform for an Indian investor: client risk profiling, N-asset efficient frontier and Capital Allocation Line, VaR/CVaR and stress testing, performance attribution, rebalancing and goals-based Monte Carlo planning — built on real market data." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%2305070b'/%3E%3Cpath d='M18 78 Q30 30 82 22' stroke='%2300f0ff' stroke-width='8' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='52' cy='38' r='8' fill='%23ff2ec4'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<header class="app-header">
+  <div class="brand">
+    <span class="dot" aria-hidden="true"></span>
+    <div>
+      <h1>Portfolio Construction Lab</h1>
+      <div class="sub">Multi-Asset Allocation · Risk · Planning — INR · data as of <span class="as-of" id="as-of">—</span></div>
+    </div>
+  </div>
+  <div class="market-clock">
+    <span class="live-badge" title="Market data refreshed weekly by a scheduled pipeline">REAL DATA</span>
+    <span id="clock">--:--:--</span>
+  </div>
+</header>
+
+<section class="kpi-strip" aria-label="Client portfolio summary">
+  <div class="kpi-tile">
+    <div class="kpi-label">Client Profile</div>
+    <div class="kpi-value" id="kpi-profile" style="font-size:14px">—</div>
+    <div class="kpi-sub" id="kpi-profile-sub">—</div>
+  </div>
+  <div class="kpi-tile">
+    <div class="kpi-label">Risk Aversion (A)</div>
+    <div class="kpi-value" id="kpi-A">—</div>
+    <div class="kpi-sub" id="kpi-A-sub">—</div>
+  </div>
+  <div class="kpi-tile">
+    <div class="kpi-label">Risky Share (y)</div>
+    <div class="kpi-value" id="kpi-y">—</div>
+    <div class="kpi-sub" id="kpi-y-sub">—</div>
+  </div>
+  <div class="kpi-tile">
+    <div class="kpi-label">Expected Return</div>
+    <div class="kpi-value" id="kpi-ret">—</div>
+    <div class="kpi-sub">annual, ex-ante</div>
+  </div>
+  <div class="kpi-tile">
+    <div class="kpi-label">Volatility</div>
+    <div class="kpi-value" id="kpi-vol">—</div>
+    <div class="kpi-sub">annual, ex-ante</div>
+  </div>
+  <div class="kpi-tile">
+    <div class="kpi-label">Sharpe (ex-ante)</div>
+    <div class="kpi-value" id="kpi-sharpe">—</div>
+    <div class="kpi-sub" id="kpi-rf">—</div>
+  </div>
+  <div class="kpi-tile">
+    <div class="kpi-label">1-Day 95% VaR</div>
+    <div class="kpi-value" id="kpi-var">—</div>
+    <div class="kpi-sub">historical simulation</div>
+  </div>
+</section>
+
+<nav class="tab-nav" role="tablist" aria-label="Platform modules">
+  <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="panel-profile" id="tab-profile" data-tab="profile">01 · Client Profile</button>
+  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-allocation" id="tab-allocation" data-tab="allocation">02 · Allocation</button>
+  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-risk" id="tab-risk" data-tab="risk">03 · Risk &amp; Stress</button>
+  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-performance" id="tab-performance" data-tab="performance">04 · Performance</button>
+  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-rebalance" id="tab-rebalance" data-tab="rebalance">05 · Rebalancing</button>
+  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-goals" id="tab-goals" data-tab="goals">06 · Goals</button>
+</nav>
+
+<main id="main-content">
+
+  <!-- ============ 01 CLIENT PROFILE ============ -->
+  <section class="tab-panel active" id="panel-profile" role="tabpanel" aria-labelledby="tab-profile">
+    <p class="section-intro">
+      Onboarding as a wealth manager would run it: eight questions scored on two separate dimensions —
+      <strong>willingness</strong> (attitude to risk) and <strong>capacity</strong> (financial ability to absorb losses).
+      The lower of the two governs, and the result is translated into the coefficient of risk aversion
+      <strong>A</strong> in the mean-variance utility <span style="font-family:var(--mono)">U = E[r] − ½·A·σ²</span> that drives the allocation engine.
+    </p>
+    <div class="panel-grid" style="grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);">
+      <div class="card">
+        <h2 class="card-title">Risk Questionnaire</h2>
+        <p class="card-desc" id="profile-sample-note">Pre-filled with a sample mid-career salaried client — change any answer and every module updates.</p>
+        <div id="q-list"></div>
+        <div class="btn-group" style="margin-top:16px">
+          <button type="button" class="btn" id="profile-reset">Reset to sample client</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2 class="card-title">Risk Profile</h2>
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+            <div>
+              <div class="big-number-label">Risk aversion A</div>
+              <div class="big-number" id="profile-A">—</div>
+            </div>
+            <div style="text-align:right">
+              <div class="profile-badge" id="profile-label">—</div>
+              <div class="kpi-sub" style="margin-top:6px">combined score <span id="profile-score">—</span></div>
+            </div>
+          </div>
+          <div class="score-bar">
+            <div class="control-label"><span>Willingness (attitude)</span><span class="value" id="bar-will-val">—</span></div>
+            <div class="bar-track"><div class="bar-fill" id="bar-will-fill"></div></div>
+          </div>
+          <div class="score-bar">
+            <div class="control-label"><span>Capacity (ability)</span><span class="value" id="bar-cap-val">—</span></div>
+            <div class="bar-track"><div class="bar-fill" id="bar-cap-fill"></div></div>
+          </div>
+          <p class="legend-note" id="profile-A-use"></p>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title">Suitability Notes</h2>
+          <ul class="note-list" id="profile-notes"></ul>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title">Recommended Allocation</h2>
+          <div class="alloc-bar" id="profile-alloc-bar" role="img" aria-label="Recommended allocation by sleeve"></div>
+          <div class="table-scroll"><table class="data-table" id="profile-alloc-table"></table></div>
+        </div>
+      </div>
+    </div>
+
+    <details class="method">
+      <summary>Method — how answers become A</summary>
+      <p>Each answer scores 0–3. Willingness = Q1–Q4 total ÷ 12; capacity = Q5–Q8 total ÷ 12. The governing score
+        is <code>s = min(willingness, capacity)</code>, the standard IPS rule that the more restrictive dimension wins.</p>
+      <div class="formula">A(s) = 12 · (1.5 / 12)<sup>s</sup> &nbsp;→&nbsp; s = 0 gives A = 12 (very conservative), s = 1 gives A = 1.5 (aggressive)</div>
+      <p>The mapping is log-linear because the optimal risky share y* = (E[r<sub>P</sub>] − r<sub>f</sub>) / (A·σ<sub>P</sub>²) is inversely
+        proportional to A, so equal score steps give proportional steps in risky exposure. The 1.5–12 range is a design
+        calibration (textbook examples typically use A ≈ 2–4 for an average investor), not an empirically estimated scale.</p>
+    </details>
+  </section>
+
+  <!-- ============ 02 ALLOCATION ============ -->
+  <section class="tab-panel" id="panel-allocation" role="tabpanel" aria-labelledby="tab-allocation" hidden>
+    <p class="section-intro">Module in progress.</p>
+  </section>
+
+  <!-- ============ 03 RISK & STRESS ============ -->
+  <section class="tab-panel" id="panel-risk" role="tabpanel" aria-labelledby="tab-risk" hidden>
+    <p class="section-intro">Module in progress.</p>
+  </section>
+
+  <!-- ============ 04 PERFORMANCE ============ -->
+  <section class="tab-panel" id="panel-performance" role="tabpanel" aria-labelledby="tab-performance" hidden>
+    <p class="section-intro">Module in progress.</p>
+  </section>
+
+  <!-- ============ 05 REBALANCING ============ -->
+  <section class="tab-panel" id="panel-rebalance" role="tabpanel" aria-labelledby="tab-rebalance" hidden>
+    <p class="section-intro">Module in progress.</p>
+  </section>
+
+  <!-- ============ 06 GOALS ============ -->
+  <section class="tab-panel" id="panel-goals" role="tabpanel" aria-labelledby="tab-goals" hidden>
+    <p class="section-intro">Module in progress.</p>
+  </section>
+
+</main>
+
+<footer class="footer-note">
+  <div><strong>Data.</strong> <span id="footer-dq">—</span></div>
+  <div style="margin-top:6px"><strong>Disclaimer.</strong> An independent educational project applying investment-analysis and
+    financial-risk-management coursework. Historical estimates are not forecasts, and nothing here is investment advice.</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="data/portfolio-data.js"></script>
+<script src="assets/js/utils.js"></script>
+<script src="assets/js/state.js"></script>
+<script src="assets/js/profile.js"></script>
+<script src="assets/js/main.js"></script>
+</body>
+</html>
