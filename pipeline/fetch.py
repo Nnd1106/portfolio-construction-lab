@@ -45,9 +45,13 @@ def history(ticker, retries=3):
 def remove_bad_ticks(s, thr=C.SPIKE_THRESHOLD, max_len=5):
     """
     Drop spike-and-reversal glitches: a jump of more than `thr` that reverts
-    to within thr/2 of the pre-jump level within `max_len` sessions. Genuine
-    crashes (no reversal) are kept. Returns (clean series, list of dropped dates).
+    to within 5% of the pre-jump level within `max_len` sessions. Genuine
+    crashes (no reversal) are kept, and so are real spikes that only partly
+    fade (e.g. the 18-May-2009 election-day rally). The known yfinance
+    glitches (NIFTYBEES/GOLDBEES, 19-20 Dec 2019) revert to within 0.5%.
+    Returns (clean series, list of dropped dates).
     """
+    revert_tol = 0.05
     vals = s.values.copy()
     keep = np.ones(len(vals), dtype=bool)
     dropped = []
@@ -56,7 +60,7 @@ def remove_bad_ticks(s, thr=C.SPIKE_THRESHOLD, max_len=5):
         prev = vals[i - 1]
         if abs(vals[i] / prev - 1) > thr:
             for j in range(i + 1, min(i + 1 + max_len, len(vals))):
-                if abs(vals[j] / prev - 1) < thr / 2:
+                if abs(vals[j] / prev - 1) < revert_tol:
                     keep[i:j] = False
                     dropped += [d.date().isoformat() for d in s.index[i:j]]
                     i = j

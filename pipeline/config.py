@@ -137,4 +137,4 @@ STRESS_SCENARIOS = [
     },
 ]
 
-SPIKE_THRESHOLD = 0.25  # single-day spike-and-reversal filter (bad ticks)
+SPIKE_THRESHOLD = 0.40  # single-day spike-and-reversal filter (bad ticks; real glitches are 50-99% moves)

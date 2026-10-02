@@ -841,3 +841,14 @@ details.method code { font-family: var(--mono); color: var(--text-primary); font
 .alloc-bar > div { height: 100%; min-width: 2px; }
 .alloc-bar > div:first-child { border-radius: 4px 0 0 4px; }
 .alloc-bar > div:last-child { border-radius: 0 4px 4px 0; }
+
+/* Grid and flex children default to min-width:auto, which lets wide tables or
+   canvases push a column past the viewport on phones. */
+.panel-grid > *, .chart-row > * { min-width: 0; }
+@media (max-width: 600px) {
+  .tab-panel { padding: 16px 16px 32px; }
+  .app-header, .footer-note { padding-left: 16px; padding-right: 16px; }
+  .tab-nav { padding: 0 8px; }
+  .big-number { font-size: 32px; }
+  .heatmap td { min-width: 40px; padding: 8px 2px; }
+}
