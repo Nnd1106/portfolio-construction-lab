@@ -65,7 +65,8 @@ const Risk = {
     }
     if (which === 'policy') {
       const w = KEYS.map((k) => DATA.policy_benchmark[k] || 0);
-      return { label: 'Policy benchmark', w, cash: 0, spread: 0, daily: Portfolio.dailyReturns(w) };
+      // Stress / custom shocks apply sleeve returns; history uses the Nifty 50 for the equity segment.
+      return { label: 'Policy benchmark', w, cash: 0, spread: 0, daily: Portfolio.policyDaily(), niftyEquity: true };
     }
     return { label: 'Nifty 50', w: null, cash: 0, spread: 0, daily: DATA.series.returns.BENCH.slice(), wBench: zero };
   },
@@ -310,12 +311,13 @@ const Risk = {
     const rows = KEYS.map((k, i) => `<tr><td><span class="swatch" style="background:${SERIES_COLORS[k]}"></span>${esc(ASSET[k].name)}</td>
       <td>${sel.w ? fmtPct(sel.w[i], 1) : '—'}</td>
       ${scs.map((s) => {
-        const e = s.returns[k];
+        const e = k === 'IN_EQ' && sel.niftyEquity ? { ret: s.benchmark.ret, source: 'actual', detail: s.benchmark.source } : s.returns[k];
         return `<td class="${e.ret < 0 ? 'neg' : 'pos'}" title="${esc(e.detail)}">${fmtSignedPct(e.ret, 1)}<span class="src ${e.source}">${e.source}</span></td>`;
       }).join('')}</tr>`).join('');
     const cashRow = `<tr><td><span class="swatch" style="background:${SERIES_COLORS.CASH}"></span>Risk-free / financing</td><td>${sel.w ? fmtPct(sel.cash, 1) : '—'}</td>
       ${scs.map((s) => `<td title="${esc(s.cash.source)}">${fmtSignedPct(s.cash.ret, 2)}<span class="src ${s.cash.source.startsWith('assumption') ? 'assumption' : 'actual'}">${s.cash.source.startsWith('assumption') ? 'assumption' : 'actual'}</span></td>`).join('')}</tr>`;
-    const impacts = scs.map((s) => (sel.w ? this.scenarioImpact(sel, Object.fromEntries(KEYS.map((k) => [k, s.returns[k].ret])), s.cash.ret, days(s)) : s.benchmark.ret));
+    const scenRets = (s) => Object.fromEntries(KEYS.map((k) => [k, k === 'IN_EQ' && sel.niftyEquity ? s.benchmark.ret : s.returns[k].ret]));
+    const impacts = scs.map((s) => (sel.w ? this.scenarioImpact(sel, scenRets(s), s.cash.ret, days(s)) : s.benchmark.ret));
     const totRow = `<tr class="total"><td>${esc(sel.label)}</td><td>${sel.w ? fmtPct(sel.w.reduce((a, x) => a + x, 0) + sel.cash, 0) : ''}</td>
       ${impacts.map((v) => `<td class="${v < 0 ? 'neg' : 'pos'}">${fmtSignedPct(v, 1)}<br><span style="font-weight:400;color:var(--text-muted)">${fmtCompactINR(v * p.value)}</span></td>`).join('')}</tr>`;
     const benchRow = `<tr><td>Nifty 50</td><td></td>${scs.map((s) => `<td class="${s.benchmark.ret < 0 ? 'neg' : 'pos'}" title="${esc(s.benchmark.source)}">${fmtSignedPct(s.benchmark.ret, 1)}</td>`).join('')}</tr>`;

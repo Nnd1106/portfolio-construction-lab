@@ -357,7 +357,95 @@
 
   <!-- ============ 04 PERFORMANCE ============ -->
   <section class="tab-panel" id="panel-performance" role="tabpanel" aria-labelledby="tab-performance" hidden>
-    <p class="section-intro">Module in progress.</p>
+    <p class="section-intro">
+      How the allocation would have performed over the data window, held at target weights with <strong>monthly rebalancing</strong>:
+      risk-adjusted ratios benchmarked against the <strong>Nifty 50</strong>, and a <strong>Brinson-Fachler attribution</strong> that splits
+      active return against the strategic policy benchmark into allocation, selection and interaction effects.
+    </p>
+    <div class="panel-grid">
+      <div>
+        <div class="card">
+          <h2 class="card-title">Settings</h2>
+          <div class="control-group">
+            <label class="field-label" for="perf-port">Portfolio</label>
+            <select class="text-input" id="perf-port">
+              <option value="client">Client complete portfolio</option>
+              <option value="orp">Optimal Risky Portfolio</option>
+              <option value="mvp">Minimum Variance Portfolio</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <div class="control-label"><span>Evaluation period</span></div>
+            <div class="seg" role="group" aria-label="Evaluation period">
+              <button type="button" data-period="all" aria-pressed="true">Full</button>
+              <button type="button" data-period="3">3Y</button>
+              <button type="button" data-period="1">1Y</button>
+            </div>
+            <p class="legend-note" id="perf-period-note"></p>
+          </div>
+        </div>
+        <div class="card">
+          <h2 class="card-title">Read With Care</h2>
+          <ul class="note-list">
+            <li><strong>In-sample.</strong> ORP weights were estimated on this same window, so the backtest flatters the optimized portfolios — especially alpha.</li>
+            <li><strong>Survivorship.</strong> The Indian equity basket was picked from today's large caps, which biases its history — and the selection effect — upward.</li>
+            <li><strong>Benchmark.</strong> Nifty 50 BeES (incl. dividends reinvested by the fund) stands in for the Nifty 50 total-return index.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2 class="card-title">Risk-Adjusted Performance</h2>
+          <div class="table-scroll"><table class="data-table" id="perf-table"></table></div>
+          <p class="legend-note" id="perf-table-note"></p>
+          <p class="legend-note">Daily data; rf = liquid-fund NAV return each day. Beta, Treynor, Jensen's α, tracking error and information ratio are measured against the Nifty 50.</p>
+        </div>
+
+        <div class="chart-row two-col" style="margin-top:16px">
+          <div class="card">
+            <h2 class="card-title">Growth of ₹10 Lakh</h2>
+            <div class="legend-row" id="perf-growth-legend"></div>
+            <div class="chart-wrap"><canvas id="chart-perf-growth" role="img" aria-label="Growth of 10 lakh rupees"></canvas></div>
+          </div>
+          <div class="card">
+            <h2 class="card-title">Rolling 1-Year Sharpe Ratio</h2>
+            <div class="legend-row" id="perf-roll-legend"></div>
+            <div class="chart-wrap"><canvas id="chart-perf-roll" role="img" aria-label="Rolling one-year Sharpe ratio"></canvas></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <h2 class="card-title">Brinson-Fachler Attribution vs Policy Benchmark</h2>
+          <p class="card-desc" id="perf-brinson-desc"></p>
+          <div class="chart-row two-col">
+            <div>
+              <div class="legend-row"><span><span class="swatch" style="background:#e6edf7"></span>Allocation</span><span><span class="swatch" style="background:#9085e9"></span>Selection</span><span><span class="swatch" style="background:#6b7a8f"></span>Interaction</span></div>
+              <div class="chart-wrap"><canvas id="chart-perf-brinson" role="img" aria-label="Attribution effects by sleeve"></canvas></div>
+            </div>
+            <div>
+              <div class="legend-row"><span>Benchmark return → effects → portfolio return (cumulative)</span></div>
+              <div class="chart-wrap"><canvas id="chart-perf-waterfall" role="img" aria-label="Attribution waterfall"></canvas></div>
+            </div>
+          </div>
+          <div class="table-scroll" style="margin-top:12px"><table class="data-table" id="perf-brinson-table"></table></div>
+          <div class="callout info" id="perf-brinson-check"></div>
+        </div>
+      </div>
+    </div>
+
+    <details class="method">
+      <summary>Method — ratios and attribution</summary>
+      <div class="formula">Sharpe = (R̄<sub>p</sub> − R̄<sub>f</sub>)/σ<sub>p</sub> · Sortino = (R̄<sub>p</sub> − R̄<sub>f</sub>)/σ<sub>down</sub> · Treynor = (R̄<sub>p</sub> − R̄<sub>f</sub>)/β · α<sub>J</sub> = (R̄<sub>p</sub> − R̄<sub>f</sub>) − β(R̄<sub>m</sub> − R̄<sub>f</sub>) · TE = σ(R<sub>p</sub> − R<sub>m</sub>)</div>
+      <p>All annualized from daily returns (means ×252, deviations ×√252). Downside deviation uses the risk-free rate as the target:
+        √(mean(min(R<sub>p</sub> − R<sub>f</sub>, 0)²)). β is the slope of portfolio excess returns on Nifty 50 excess returns.</p>
+      <p><strong>Brinson-Fachler (per month).</strong> With portfolio weights w<sub>p,i</sub>, policy weights w<sub>b,i</sub>, sleeve returns R<sub>p,i</sub>
+        and segment benchmark returns R<sub>b,i</sub>:</p>
+      <div class="formula">Allocation<sub>i</sub> = (w<sub>p,i</sub> − w<sub>b,i</sub>)(R<sub>b,i</sub> − R<sub>b</sub>) · Selection<sub>i</sub> = w<sub>b,i</sub>(R<sub>p,i</sub> − R<sub>b,i</sub>) · Interaction<sub>i</sub> = (w<sub>p,i</sub> − w<sub>b,i</sub>)(R<sub>p,i</sub> − R<sub>b,i</sub>)</div>
+      <p>The Indian equity segment benchmark is the Nifty 50; every other sleeve is its own benchmark (passive ETF), and the cash segment
+        is the liquid fund — so selection arises only from the stock basket and, if leveraged, from financing cost. Monthly effects
+        are linked with Carino (1999) log-smoothing coefficients so they sum exactly to the cumulative active return.</p>
+    </details>
   </section>
 
   <!-- ============ 05 REBALANCING ============ -->
@@ -385,6 +473,7 @@
 <script src="assets/js/profile.js"></script>
 <script src="assets/js/allocation.js"></script>
 <script src="assets/js/risk.js"></script>
+<script src="assets/js/performance.js"></script>
 <script src="assets/js/main.js"></script>
 </body>
 </html>

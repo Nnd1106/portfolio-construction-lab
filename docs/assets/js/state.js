@@ -182,6 +182,13 @@ const Portfolio = {
     return out;
   },
 
+  /** Policy benchmark (constant weights) — its Indian-equity segment is the Nifty 50, not the basket. */
+  policyDaily() {
+    const R = DATA.series.returns;
+    const w = KEYS.map((k) => DATA.policy_benchmark[k] || 0);
+    return DATA.series.dates.map((_, t) => KEYS.reduce((s, k, i) => s + w[i] * (k === 'IN_EQ' ? R.BENCH[t] : R[k][t]), 0));
+  },
+
   clientDaily() {
     const c = this.client();
     return this.dailyReturns(c.w, c.cash, c.regime === 'borrow' ? Store.state.borrowSpread : 0);
