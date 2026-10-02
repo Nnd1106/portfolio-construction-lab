@@ -18,6 +18,7 @@
 
   const MODULES = {
     profile: typeof Profile !== 'undefined' ? Profile : null,
+    market: typeof Market !== 'undefined' ? Market : null,
     allocation: typeof Allocation !== 'undefined' ? Allocation : null,
     risk: typeof Risk !== 'undefined' ? Risk : null,
     performance: typeof Performance !== 'undefined' ? Performance : null,
@@ -63,6 +64,26 @@
       const i = list.indexOf(btn) + (e.key === 'ArrowRight' ? 1 : -1);
       activateTab(list[(i + list.length) % list.length].dataset.tab, true);
     });
+  });
+
+  /* ---------------- "Next step" buttons walk a client through the tabs in order ---------------- */
+  const order = [...tabButtons];
+  order.forEach((btn, i) => {
+    const panel = $('panel-' + btn.dataset.tab);
+    const next = order[i + 1];
+    const prev = order[i - 1];
+    if (!panel || (!next && !prev)) return;
+    const nav = document.createElement('div');
+    nav.className = 'step-nav';
+    nav.innerHTML = (prev ? `<button type="button" class="btn" data-goto="${prev.dataset.tab}">← ${esc(prev.textContent)}</button>` : '<span></span>') +
+      (next ? `<button type="button" class="btn primary" data-goto="${next.dataset.tab}">Next: ${esc(next.textContent)} →</button>` : '');
+    panel.appendChild(nav);
+  });
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-goto]');
+    if (!b) return;
+    activateTab(b.dataset.goto);
+    document.querySelector('.tab-nav').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
   /* ---------------- Clock ---------------- */
@@ -116,6 +137,7 @@
   });
 
   Object.values(MODULES).forEach((m) => m && m.init && m.init());
+  if (typeof Proposal !== 'undefined') Proposal.init();
   renderFooter();
   renderKpis();
   const fromHash = (location.hash || '').slice(1);

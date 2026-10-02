@@ -1,5 +1,5 @@
 /* ---------------------------------------------------------------------
- * performance.js — Module 4: performance & attribution.
+ * performance.js — Module 5: performance & attribution.
  * Monthly-rebalanced backtest of the selected allocation, risk-adjusted
  * ratios vs the Nifty 50, and Brinson-Fachler attribution against the
  * policy benchmark with Carino multi-period linking.

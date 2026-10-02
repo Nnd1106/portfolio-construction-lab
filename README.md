@@ -1,6 +1,6 @@
 # Portfolio Construction Lab
 
-A multi-asset portfolio construction platform for an Indian (INR) investor that runs end to end, as a wealth manager would work: **profile the client → build the strategic allocation → stress the risk → evaluate and attribute performance → plan the rebalancing discipline → test whether the plan reaches the client's goal.**
+A multi-asset portfolio construction platform for an Indian (INR) investor that runs end to end, as a wealth manager would work: **profile the client → inspect the real asset universe → build the strategic allocation → stress the risk → evaluate and attribute performance → plan the rebalancing discipline → test whether the plan reaches the client's goal → hand over a one-page proposal.**
 
 It combines investment-analysis theory (N-asset Markowitz optimization, the efficient frontier, the Capital Allocation Line), financial risk management (VaR / Expected Shortfall, backtesting, stress testing) and wealth-management client tools (risk profiling, goals-based Monte Carlo planning). I built it independently, out of interest in investment banking and wealth management, applying MBA coursework in Investment Analysis & Portfolio Management and Financial Risk Management to real market data.
 
@@ -10,18 +10,21 @@ Dark, finance-terminal UI in vanilla HTML/CSS/JS + [Chart.js](https://www.chartj
 
 ---
 
-## The six modules
+## The seven modules
 
 | # | Module | What it does |
 |---|---|---|
 | 01 | **Client Profile** | 8-question onboarding scored on two IPS dimensions: *willingness* (attitude) and *capacity* (ability) to bear risk. The lower one governs, and the score maps to the risk-aversion coefficient **A** in `U = E[r] − ½Aσ²`. Rule-based suitability notes and a recommended allocation. |
-| 02 | **Allocation** | N-asset **efficient frontier** (SciPy SLSQP, long-only), **Minimum Variance Portfolio**, tangency **Optimal Risky Portfolio**, and the **Capital Allocation Line** from the risk-free rate. The client's optimal complete portfolio `y* = (E[r_P] − r_f)/(Aσ_P²)` is plotted with their indifference curve. If y* > 1 and leverage is off, the client moves up the frontier past the ORP; an optional kinked CAL handles borrowing at r_f + spread. Includes a frontier transition map and a Policy vs Textbook estimation toggle. |
-| 03 | **Risk & Stress** | Historical-simulation and parametric **VaR / CVaR** (any confidence, 1–20 day horizon), a rolling **VaR backtest** with the Kupiec POF test and Basel traffic light, Euler **risk contributions**, an underwater **drawdown** chart, a weekly/daily **correlation heatmap**, three **historical stress scenarios** (GFC 2008, COVID-19 2020, 2022 rate shock) applied to today's weights, and a custom shock builder. |
-| 04 | **Performance** | **Sharpe, Sortino, Treynor, Jensen's α, beta, tracking error, information ratio** vs the Nifty 50, plus a **Brinson-Fachler attribution** (allocation / selection / interaction) against a 50/30/10/10 policy benchmark, linked across months with Carino smoothing so the effects sum exactly to the active return. |
-| 05 | **Rebalancing** | Daily weight drift on real prices: **buy-and-hold vs tolerance bands** (absolute pp or relative %, monitored daily/weekly/monthly) **vs calendar rebalancing**, net of transaction costs, with turnover, drift and risk comparisons. |
-| 06 | **Goals** | Client-side **Monte Carlo**: 5,000 lognormal monthly paths, moment-matched to the client portfolio's μ and σ. Inputs are a lump sum plus a stepped-up SIP against an inflation-adjusted target. Outputs are the probability of success, a fan chart, success probability by year, and the **exact SIP needed for a chosen confidence level**. |
+| 02 | **Market Data** | Full transparency on the real instruments behind the platform: data freshness (last NSE/US close, pipeline run, next scheduled refresh), a card for every sleeve vehicle plus the benchmark, USD/INR and the risk-free NAV (last close, weekly change, 1-year sparkline, 52-week range, returns, volatility, expense ratio/AUM/P-E where available), relative performance rebased to 100, the **12-stock basket** (sortable table with latest closes, returns, 52-week range, beta, market cap, P/E, dividend yield; click-to-chart drill-down vs the Nifty; 12×12 correlation matrix; sector mix), rolling 52-week cross-asset correlations, macro & rates, and CSV/JSON downloads of every number. |
+| 03 | **Allocation** | N-asset **efficient frontier** (SciPy SLSQP, long-only), **Minimum Variance Portfolio**, tangency **Optimal Risky Portfolio**, and the **Capital Allocation Line** from the risk-free rate. The client's optimal complete portfolio `y* = (E[r_P] − r_f)/(Aσ_P²)` is plotted with their indifference curve. If y* > 1 and leverage is off, the client moves up the frontier past the ORP; an optional kinked CAL handles borrowing at r_f + spread. Includes a frontier transition map and a Policy vs Textbook estimation toggle. |
+| 04 | **Risk & Stress** | Historical-simulation and parametric **VaR / CVaR** (any confidence, 1–20 day horizon), a rolling **VaR backtest** with the Kupiec POF test and Basel traffic light, Euler **risk contributions**, an underwater **drawdown** chart, a weekly/daily **correlation heatmap**, three **historical stress scenarios** (GFC 2008, COVID-19 2020, 2022 rate shock) applied to today's weights, and a custom shock builder. |
+| 05 | **Performance** | **Sharpe, Sortino, Treynor, Jensen's α, beta, tracking error, information ratio** vs the Nifty 50, plus a **Brinson-Fachler attribution** (allocation / selection / interaction) against a 50/30/10/10 policy benchmark, linked across months with Carino smoothing so the effects sum exactly to the active return. |
+| 06 | **Rebalancing** | Daily weight drift on real prices: **buy-and-hold vs tolerance bands** (absolute pp or relative %, monitored daily/weekly/monthly) **vs calendar rebalancing**, net of transaction costs, with turnover, drift and risk comparisons. |
+| 07 | **Goals** | Client-side **Monte Carlo**: 5,000 lognormal monthly paths, moment-matched to the client portfolio's μ and σ. Inputs are a lump sum plus a stepped-up SIP against an inflation-adjusted target. Outputs are the probability of success, a fan chart, success probability by year, and the **exact SIP needed for a chosen confidence level**. |
 
 Every module reads the same client state, so changing one questionnaire answer re-flows through the allocation, risk numbers, attribution, rebalancing and goal probability.
+
+**Client Proposal.** A header button assembles the client's current state into a one-page investment proposal: profile, recommended allocation with real tickers, latest closes and rupee amounts, expected return and volatility, VaR/ES, historical stress results, goal probability and the required SIP, implementation notes and assumptions. It has a light print layout for *Print / Save as PDF*.
 
 ---
 
@@ -51,6 +54,8 @@ GitHub Actions (weekly, Sat 08:00 IST — after the US Friday close)
   └─ pipeline/build_data.py
        ├─ fetch.py      yfinance download → bad-tick filter → fallbacks → INR conversion
        │                → daily panel on the NSE calendar (as-of alignment for US assets)
+       ├─ market.py     per-instrument snapshot: last close, period returns, 52W range, vol, beta,
+       │                optional fundamentals, daily close history, basket correlations, rolling correlations
        ├─ analytics.py  weekly returns → Bayes-Stein means → SLSQP frontier / MVP / ORP
        │                → stress windows (live vehicle, documented proxy, or explicit assumption)
        │                → reference risk metrics for browser parity checks

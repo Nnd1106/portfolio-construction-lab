@@ -1,5 +1,5 @@
 /* ---------------------------------------------------------------------
- * risk.js — Module 3: risk & stress dashboard.
+ * risk.js — Module 4: risk & stress dashboard.
  * VaR / Expected Shortfall (historical + parametric), rolling VaR backtest
  * with the Kupiec POF test and Basel traffic light, drawdowns, risk
  * contributions, correlation heatmap, historical and custom stress tests.

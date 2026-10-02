@@ -20,6 +20,7 @@
     </div>
   </div>
   <div class="market-clock">
+    <button type="button" class="btn primary proposal-btn" id="open-proposal">Client Proposal ↗</button>
     <span class="live-badge" title="Market data refreshed weekly by a scheduled pipeline">REAL DATA</span>
     <span id="clock">--:--:--</span>
   </div>
@@ -65,11 +66,12 @@
 
 <nav class="tab-nav" role="tablist" aria-label="Platform modules">
   <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="panel-profile" id="tab-profile" data-tab="profile">01 · Client Profile</button>
-  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-allocation" id="tab-allocation" data-tab="allocation">02 · Allocation</button>
-  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-risk" id="tab-risk" data-tab="risk">03 · Risk &amp; Stress</button>
-  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-performance" id="tab-performance" data-tab="performance">04 · Performance</button>
-  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-rebalance" id="tab-rebalance" data-tab="rebalance">05 · Rebalancing</button>
-  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-goals" id="tab-goals" data-tab="goals">06 · Goals</button>
+  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-market" id="tab-market" data-tab="market">02 · Market Data</button>
+  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-allocation" id="tab-allocation" data-tab="allocation">03 · Allocation</button>
+  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-risk" id="tab-risk" data-tab="risk">04 · Risk &amp; Stress</button>
+  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-performance" id="tab-performance" data-tab="performance">05 · Performance</button>
+  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-rebalance" id="tab-rebalance" data-tab="rebalance">06 · Rebalancing</button>
+  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-goals" id="tab-goals" data-tab="goals">07 · Goals</button>
 </nav>
 
 <main id="main-content">
@@ -140,7 +142,104 @@
     </details>
   </section>
 
-  <!-- ============ 02 ALLOCATION ============ -->
+  <!-- ============ 02 MARKET DATA ============ -->
+  <section class="tab-panel" id="panel-market" role="tabpanel" aria-labelledby="tab-market" hidden>
+    <p class="section-intro">
+      Full transparency on what this platform is built from: every instrument in the universe, the <strong>12 stocks</strong> in the
+      Indian equity basket, their latest <strong>closing prices</strong>, returns, ranges, risk and correlations — all real market data,
+      refreshed every week by the pipeline. Nothing on this page is simulated.
+    </p>
+    <div class="snapshot-bar" id="mkt-snapshot"></div>
+
+    <h2 class="block-title">Asset Universe</h2>
+    <p class="block-sub">The five sleeves the optimizer allocates across, plus the benchmark, currency and risk-free rate the analytics depend on.</p>
+    <div class="universe-grid" id="mkt-universe"></div>
+
+    <div class="card" style="margin-top:18px">
+      <h2 class="card-title">Relative Performance — Rebased to 100 (INR)</h2>
+      <div class="perf-controls">
+        <div class="seg" role="group" aria-label="Time range" id="mkt-range"></div>
+        <div class="toggle-chips" id="mkt-series"></div>
+      </div>
+      <div class="chart-wrap tall"><canvas id="chart-mkt-rel" role="img" aria-label="Relative performance of the universe, rebased to 100"></canvas></div>
+      <p class="legend-note" id="mkt-rel-note"></p>
+    </div>
+
+    <h2 class="block-title">The 12-Stock Indian Equity Basket</h2>
+    <p class="block-sub">Equal-weighted (8.33% each) and rebalanced monthly, chosen to span nine sectors of the Nifty 50. Click any row to chart that stock; click a column header to sort.</p>
+    <div class="stat-row" id="mkt-basket-stats"></div>
+    <div class="card">
+      <h2 class="card-title">Constituents — Latest Close &amp; Statistics</h2>
+      <div class="table-scroll"><table class="data-table sortable" id="mkt-basket-table"></table></div>
+      <p class="legend-note">Prices are dividend- and split-adjusted closes from Yahoo Finance. Beta and correlation are vs the Nifty 50 over the last year of daily returns. Market cap, P/E and dividend yield come from the latest quote summary and may be blank if unavailable.</p>
+    </div>
+
+    <div class="card" style="margin-top:16px" id="mkt-drill-card">
+      <h2 class="card-title" id="mkt-drill-title">Stock Chart</h2>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+        <div class="legend-row" id="mkt-drill-legend" style="margin:0"></div>
+        <div class="seg" role="group" aria-label="Chart range" id="mkt-drill-range" style="max-width:260px"></div>
+      </div>
+      <div class="chart-wrap" style="margin-top:10px"><canvas id="chart-mkt-drill" role="img" aria-label="Selected stock price chart"></canvas></div>
+      <div class="stat-row" id="mkt-drill-stats" style="margin-top:12px;margin-bottom:0"></div>
+    </div>
+
+    <div class="chart-row two-col" style="margin-top:16px">
+      <div class="card">
+        <h2 class="card-title">Basket Correlation Matrix (Weekly)</h2>
+        <div class="table-scroll"><table class="heatmap compact" id="mkt-corr"></table></div>
+        <p class="legend-note" id="mkt-corr-note"></p>
+      </div>
+      <div class="card">
+        <h2 class="card-title">Sector Composition</h2>
+        <div class="chart-wrap short"><canvas id="chart-mkt-sectors" role="img" aria-label="Basket weight by sector"></canvas></div>
+        <h2 class="card-title" style="margin-top:18px">1-Year Return by Stock</h2>
+        <div class="chart-wrap short"><canvas id="chart-mkt-stock-ret" role="img" aria-label="One-year return by stock"></canvas></div>
+      </div>
+    </div>
+
+    <div class="chart-row two-col" style="margin-top:16px">
+      <div class="card">
+        <h2 class="card-title">Rolling 52-Week Correlations Between Sleeves</h2>
+        <div class="legend-row" id="mkt-roll-legend"></div>
+        <div class="chart-wrap"><canvas id="chart-mkt-roll" role="img" aria-label="Rolling correlations between asset sleeves"></canvas></div>
+        <p class="legend-note">Diversification is not constant: correlations drift and often rise in sell-offs. The optimizer uses the full-window average.</p>
+      </div>
+      <div class="card">
+        <h2 class="card-title">Macro &amp; Rates</h2>
+        <div class="stat-row" id="mkt-macro-stats"></div>
+        <div class="legend-row"><span><span class="line-key" style="border-color:#e6edf7"></span>USD / INR, last 3 years</span></div>
+        <div class="chart-wrap short"><canvas id="chart-mkt-fx" role="img" aria-label="USD to INR exchange rate"></canvas></div>
+        <h2 class="card-title" style="margin-top:18px">Risk-Free Rate by Calendar Year</h2>
+        <div class="chart-wrap short"><canvas id="chart-mkt-rf" role="img" aria-label="Liquid fund return by calendar year"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h2 class="card-title">Download the Data</h2>
+      <p class="card-desc">Everything the platform computes from is downloadable — verify any number yourself in Excel or Python.</p>
+      <div class="btn-group" id="mkt-downloads">
+        <button type="button" class="btn" data-dl="snapshot">Snapshot table (CSV)</button>
+        <button type="button" class="btn" data-dl="closes">Daily closes, all instruments (CSV)</button>
+        <button type="button" class="btn" data-dl="returns">Daily INR returns used by the models (CSV)</button>
+        <a class="btn" href="data/portfolio-data.json" download>Full dataset (JSON)</a>
+      </div>
+    </div>
+
+    <details class="method">
+      <summary>Data dictionary &amp; sourcing</summary>
+      <ul>
+        <li><strong>Source.</strong> Yahoo Finance via the open-source <code>yfinance</code> library, called server-side by a GitHub Actions job — no API keys, and your browser makes no market-data calls.</li>
+        <li><strong>Refresh.</strong> Every Saturday 08:00 IST (after the US Friday close). Each instrument shows its own last close date; NSE and US markets close on different days and holidays.</li>
+        <li><strong>Prices.</strong> Dividend- and split-adjusted closes. Bad ticks (a price that collapses and snaps back within days) are removed automatically and listed in the footer.</li>
+        <li><strong>Returns.</strong> 1W/1M/3M/6M/1Y are simple returns versus the close on or before that many calendar days ago; YTD is versus the last close of the previous year; 3Y is annualized.</li>
+        <li><strong>Volatility.</strong> Standard deviation of the last year's daily returns × √252. <strong>Beta</strong> = cov(stock, Nifty) / var(Nifty) on the same daily returns.</li>
+        <li><strong>Basket index.</strong> Equal-weight, monthly-rebalanced index of the 12 stocks, starting at 1.00 in January 2005. USD sleeves are shown in USD on their cards and converted to INR everywhere else.</li>
+      </ul>
+    </details>
+  </section>
+
+  <!-- ============ 03 ALLOCATION ============ -->
   <section class="tab-panel" id="panel-allocation" role="tabpanel" aria-labelledby="tab-allocation" hidden>
     <p class="section-intro">
       Strategic asset allocation across five sleeves in INR. The pipeline solves the long-only mean-variance problem
@@ -236,10 +335,10 @@
     </details>
   </section>
 
-  <!-- ============ 03 RISK & STRESS ============ -->
+  <!-- ============ 04 RISK & STRESS ============ -->
   <section class="tab-panel" id="panel-risk" role="tabpanel" aria-labelledby="tab-risk" hidden>
     <p class="section-intro">
-      The FRM lens on the portfolio built in Module 2: <strong>Value-at-Risk and Expected Shortfall</strong> (historical simulation and
+      The FRM lens on the portfolio built on the Allocation tab: <strong>Value-at-Risk and Expected Shortfall</strong> (historical simulation and
       parametric-normal), a rolling <strong>VaR backtest</strong> with the Kupiec test, <strong>drawdowns</strong>, <strong>risk contributions</strong>,
       the <strong>correlation structure</strong>, and <strong>historical stress scenarios</strong> replayed on the current allocation.
     </p>
@@ -355,7 +454,7 @@
     </details>
   </section>
 
-  <!-- ============ 04 PERFORMANCE ============ -->
+  <!-- ============ 05 PERFORMANCE ============ -->
   <section class="tab-panel" id="panel-performance" role="tabpanel" aria-labelledby="tab-performance" hidden>
     <p class="section-intro">
       How the allocation would have performed over the data window, held at target weights with <strong>monthly rebalancing</strong>:
@@ -448,7 +547,7 @@
     </details>
   </section>
 
-  <!-- ============ 05 REBALANCING ============ -->
+  <!-- ============ 06 REBALANCING ============ -->
   <section class="tab-panel" id="panel-rebalance" role="tabpanel" aria-labelledby="tab-rebalance" hidden>
     <p class="section-intro">
       Target weights do not stay put. Starting from the client's allocation on the first day of the window, this simulator lets
@@ -545,7 +644,7 @@
     </details>
   </section>
 
-  <!-- ============ 06 GOALS ============ -->
+  <!-- ============ 07 GOALS ============ -->
   <section class="tab-panel" id="panel-goals" role="tabpanel" aria-labelledby="tab-goals" hidden>
     <p class="section-intro">
       Goals-based planning: given a lump sum, a monthly SIP with an annual step-up, and a target in today's rupees, the browser
@@ -641,7 +740,7 @@
 
     <details class="method">
       <summary>Method — the simulation</summary>
-      <p>Annual arithmetic expected return μ and volatility σ default to the client's complete portfolio from Module 2 (ex-ante,
+      <p>Annual arithmetic expected return μ and volatility σ default to the client's complete portfolio on the Allocation tab (ex-ante,
         policy or textbook model as selected). They are converted to lognormal parameters by moment matching so that the
         simulated simple returns have exactly that mean and variance:</p>
       <div class="formula">σ<sub>ln</sub>² = ln(1 + σ²/(1+μ)²),&nbsp;&nbsp; m<sub>ln</sub> = ln(1+μ) − σ<sub>ln</sub>²/2,&nbsp;&nbsp; monthly: r<sub>t</sub> ~ N(m<sub>ln</sub>/12, σ<sub>ln</sub>²/12)</div>
@@ -661,16 +760,30 @@
     financial-risk-management coursework. Historical estimates are not forecasts, and nothing here is investment advice.</div>
 </footer>
 
+<div class="proposal-overlay" id="proposal" hidden>
+  <div class="proposal-sheet" role="dialog" aria-modal="true" aria-labelledby="proposal-title">
+    <div class="proposal-toolbar">
+      <span id="proposal-title">Client Investment Proposal</span>
+      <label>Investment (₹) <input type="number" class="text-input" id="proposal-amount" min="0" step="100000" value="10000000" /></label>
+      <button type="button" class="btn primary" id="proposal-print">Print / Save as PDF</button>
+      <button type="button" class="btn" id="proposal-close" aria-label="Close proposal">Close ✕</button>
+    </div>
+    <div class="proposal-body" id="proposal-body"></div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="data/portfolio-data.js"></script>
 <script src="assets/js/utils.js"></script>
 <script src="assets/js/state.js"></script>
 <script src="assets/js/profile.js"></script>
+<script src="assets/js/market.js"></script>
 <script src="assets/js/allocation.js"></script>
 <script src="assets/js/risk.js"></script>
 <script src="assets/js/performance.js"></script>
 <script src="assets/js/rebalance.js"></script>
 <script src="assets/js/goals.js"></script>
+<script src="assets/js/proposal.js"></script>
 <script src="assets/js/main.js"></script>
 </body>
 </html>

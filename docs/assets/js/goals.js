@@ -1,5 +1,5 @@
 /* ---------------------------------------------------------------------
- * goals.js — Module 6: goals-based planning (client-side Monte Carlo).
+ * goals.js — Module 7: goals-based planning (client-side Monte Carlo).
  * Lognormal monthly returns moment-matched to the client portfolio's
  * ex-ante μ and σ; SIP with annual step-up; probability of success,
  * fan chart, and the exact required SIP for a target confidence.

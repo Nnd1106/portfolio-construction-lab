@@ -1,5 +1,5 @@
 /* ---------------------------------------------------------------------
- * rebalance.js — Module 5: rebalancing simulator.
+ * rebalance.js — Module 6: rebalancing simulator.
  * Buy-and-hold vs tolerance-band vs calendar rebalancing on real daily
  * INR returns, with proportional transaction costs.
  * ------------------------------------------------------------------- */
@@ -85,7 +85,7 @@ const Rebalance = {
       let dev = Math.max(...w.map((x, i) => Math.abs(x - target[i])));
 
       // Monitoring / calendar dates are the close of each period's last session
-      // (same convention as the monthly-rebalanced backtest in Module 4).
+      // (same convention as the monthly-rebalanced backtest in Module 5).
       const periodEnd = (freq) => t + 1 < n && this.periodStart(dates, t + 1, freq);
       let trigger = false;
       if (mode === 'band' && periodEnd(p.check)) {

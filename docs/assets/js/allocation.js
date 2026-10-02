@@ -1,5 +1,5 @@
 /* ---------------------------------------------------------------------
- * allocation.js — Module 2: strategic asset allocation engine.
+ * allocation.js — Module 3: strategic asset allocation engine.
  * Plots the pipeline's precomputed efficient frontiers, the MVP, the ORP,
  * the Capital Allocation Line, the client's indifference curve and their
  * optimal complete portfolio.

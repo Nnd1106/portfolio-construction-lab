@@ -19,10 +19,11 @@ sys.path.insert(0, os.path.dirname(__file__))
 import analytics as A   # noqa: E402
 import config as C      # noqa: E402
 import fetch as F       # noqa: E402
+import market as M      # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 OUT_DIR = os.path.join(ROOT, "docs", "data")
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 def r6(x):
@@ -169,6 +170,13 @@ def main():
         print("\nVALIDATION FAILED:\n  " + "\n  ".join(problems))
         sys.exit(1)
 
+    # ---------------- market snapshot (transparency layer; never fatal) ----------------
+    try:
+        market = M.build_market(panel, basket_px, basket_meta, log)
+    except Exception as exc:
+        print(f"  ! market snapshot skipped: {exc}")
+        market = None
+
     # ---------------- assemble ----------------
     out = {
         "schema_version": SCHEMA_VERSION,
@@ -197,6 +205,7 @@ def main():
         "policy_benchmark": C.POLICY_BENCHMARK,
         "stress": stress,
         "crosscheck": cross,
+        "market": market,
         "series": {
             "dates": [d.date().isoformat() for d in D.index],
             "returns": {k: [r6(x) for x in D[k].values] for k in keys + ["BENCH", "RF"]},
