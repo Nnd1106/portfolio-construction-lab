@@ -24,6 +24,8 @@ Dark, finance-terminal UI in vanilla HTML/CSS/JS + [Chart.js](https://www.chartj
 
 Every module reads the same client state, so changing one questionnaire answer re-flows through the allocation, risk numbers, attribution, rebalancing and goal probability.
 
+**Explain My Portfolio.** A second report, written for a client with no finance background. It is a narrative in short sentences with everyday analogies, and it defines any unavoidable term in brackets on first use. It covers who the plan is for (willingness vs capacity in plain words), where the money goes (real fund and company names, in rupees, with an allocation donut), what could go wrong (a "1 bad month in 20" figure and the 2008 / COVID / 2022 crashes replayed on the client's actual amount vs the Nifty 50), how the approach did historically (without ratio jargon, plus an honest hindsight caveat), rebalancing as re-measuring a recipe, and "out of 100 simulated futures, about N reached your goal" with a fan chart. It reads the same live client state. Both report charts are rendered by Chart.js in a light print palette and embedded as PNGs, so they print crisply. Verified as a real A4 PDF: 5 pages with clean breaks; the Client Proposal fits on 1 page. `?report=explain` or `?report=proposal` opens a report directly.
+
 **Client Proposal.** A header button assembles the client's current state into a one-page investment proposal: profile, recommended allocation with real tickers, latest closes and rupee amounts, expected return and volatility, VaR/ES, historical stress results, goal probability and the required SIP, implementation notes and assumptions. It has a light print layout for *Print / Save as PDF*.
 
 ---

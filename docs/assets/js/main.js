@@ -138,8 +138,14 @@
 
   Object.values(MODULES).forEach((m) => m && m.init && m.init());
   if (typeof Proposal !== 'undefined') Proposal.init();
+  if (typeof Explain !== 'undefined') Explain.init();
   renderFooter();
   renderKpis();
   const fromHash = (location.hash || '').slice(1);
   activateTab(MODULES.hasOwnProperty(fromHash) ? fromHash : 'profile');
+
+  // ?report=explain | proposal opens a report directly (shareable link, print automation)
+  const report = new URLSearchParams(location.search).get('report');
+  if (report === 'explain' && typeof Explain !== 'undefined') Explain.open();
+  if (report === 'proposal' && typeof Proposal !== 'undefined') Proposal.open();
 })();

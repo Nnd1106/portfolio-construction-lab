@@ -20,6 +20,7 @@
     </div>
   </div>
   <div class="market-clock">
+    <button type="button" class="btn proposal-btn" id="open-explain" title="A plain-language report for clients without a finance background">Explain My Portfolio ↗</button>
     <button type="button" class="btn primary proposal-btn" id="open-proposal">Client Proposal ↗</button>
     <span class="live-badge" title="Market data refreshed weekly by a scheduled pipeline">REAL DATA</span>
     <span id="clock">--:--:--</span>
@@ -772,6 +773,19 @@
   </div>
 </div>
 
+<div class="proposal-overlay" id="explain" hidden>
+  <div class="proposal-sheet" role="dialog" aria-modal="true" aria-labelledby="explain-title">
+    <div class="proposal-toolbar">
+      <span id="explain-title">Explain My Portfolio</span>
+      <label>Client name <input type="text" class="text-input" id="explain-name" maxlength="60" placeholder="Sample Client" /></label>
+      <label>Amount invested (₹) <input type="number" class="text-input" id="explain-amount" min="0" step="100000" /></label>
+      <button type="button" class="btn primary" id="explain-print">Print / Save as PDF</button>
+      <button type="button" class="btn" id="explain-close" aria-label="Close report">Close ✕</button>
+    </div>
+    <div class="proposal-body explain-body" id="explain-body"></div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="data/portfolio-data.js"></script>
 <script src="assets/js/utils.js"></script>
@@ -784,6 +798,7 @@
 <script src="assets/js/rebalance.js"></script>
 <script src="assets/js/goals.js"></script>
 <script src="assets/js/proposal.js"></script>
+<script src="assets/js/explain.js"></script>
 <script src="assets/js/main.js"></script>
 </body>
 </html>

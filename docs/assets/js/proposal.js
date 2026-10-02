@@ -19,6 +19,7 @@ const Proposal = {
 
   open() {
     this.lastFocus = document.activeElement;
+    if ($('explain')) $('explain').hidden = true;
     $('proposal').hidden = false;
     document.body.classList.add('proposal-open');
     this.build();

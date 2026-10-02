@@ -108,6 +108,13 @@ const Goals = {
     return { W, a, b, steps, contrib, mLn, sLn: Math.sqrt(s2) };
   },
 
+  /** Exact SIP needed to reach the goal with confidence q on the current paths. */
+  reqSipFor(q) {
+    const inp = this.inp;
+    const g = inp.goal * Math.pow(1 + inp.infl, inp.years);
+    return quantile(Array.from(this.sim.a, (a, i) => Math.max(0, (g - a) / this.sim.b[i])), q);
+  },
+
   percentilesAt(sim, t) {
     if (this.pctCache && this.pctCache[t]) return this.pctCache[t];
     const col = new Float64Array(N_PATHS);
