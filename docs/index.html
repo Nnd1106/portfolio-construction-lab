@@ -238,7 +238,121 @@
 
   <!-- ============ 03 RISK & STRESS ============ -->
   <section class="tab-panel" id="panel-risk" role="tabpanel" aria-labelledby="tab-risk" hidden>
-    <p class="section-intro">Module in progress.</p>
+    <p class="section-intro">
+      The FRM lens on the portfolio built in Module 2: <strong>Value-at-Risk and Expected Shortfall</strong> (historical simulation and
+      parametric-normal), a rolling <strong>VaR backtest</strong> with the Kupiec test, <strong>drawdowns</strong>, <strong>risk contributions</strong>,
+      the <strong>correlation structure</strong>, and <strong>historical stress scenarios</strong> replayed on the current allocation.
+    </p>
+    <div class="panel-grid">
+      <div>
+        <div class="card">
+          <h2 class="card-title">Risk Parameters</h2>
+          <div class="control-group">
+            <label class="field-label" for="risk-port">Portfolio</label>
+            <select class="text-input" id="risk-port">
+              <option value="client">Client complete portfolio</option>
+              <option value="orp">Optimal Risky Portfolio</option>
+              <option value="mvp">Minimum Variance Portfolio</option>
+              <option value="policy">Policy benchmark (50/30/10/10)</option>
+              <option value="bench">Nifty 50</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label class="field-label" for="risk-value">Portfolio value (₹)</label>
+            <input type="number" class="text-input" id="risk-value" min="100000" step="100000" value="10000000" />
+          </div>
+          <div class="control-group">
+            <div class="control-label"><span>Confidence level</span><span class="value" id="risk-conf-val">95%</span></div>
+            <input type="range" id="risk-conf" min="90" max="99.5" step="0.5" value="95" aria-label="Confidence level" />
+            <div class="range-scale"><span>90%</span><span>99.5%</span></div>
+          </div>
+          <div class="control-group">
+            <div class="control-label"><span>Horizon</span><span class="value" id="risk-h-val">1 day</span></div>
+            <input type="range" id="risk-h" min="1" max="20" step="1" value="1" aria-label="Horizon in trading days" />
+            <div class="range-scale"><span>1 day</span><span>20 days</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <h2 class="card-title">Pipeline Parity Check</h2>
+          <p class="card-desc">The browser recomputes the ORP's risk metrics from the shipped daily returns and compares them with the Python pipeline's reference values.</p>
+          <div id="risk-parity"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="stat-row" id="risk-stats"></div>
+
+        <div class="chart-row two-col">
+          <div class="card">
+            <h2 class="card-title">Return Distribution</h2>
+            <div class="legend-row" id="risk-hist-legend"></div>
+            <div class="chart-wrap"><canvas id="chart-risk-hist" role="img" aria-label="Histogram of portfolio returns with VaR markers"></canvas></div>
+            <p class="legend-note" id="risk-tail-note"></p>
+          </div>
+          <div class="card">
+            <h2 class="card-title">Risk Contribution vs Weight</h2>
+            <p class="chart-tip">Share of portfolio variance each sleeve contributes: w<sub>i</sub>(Σw)<sub>i</sub> / w′Σw.</p>
+            <div class="legend-row"><span><span class="swatch" style="background:#6b7a8f"></span>Capital weight</span><span><span class="swatch" style="background:#e6edf7"></span>Risk contribution</span></div>
+            <div class="chart-wrap"><canvas id="chart-risk-contrib" role="img" aria-label="Risk contribution by sleeve"></canvas></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <h2 class="card-title">VaR Backtest — Rolling 250-Day Historical VaR</h2>
+          <div class="stat-row" id="risk-bt-stats"></div>
+          <div class="legend-row" id="risk-bt-legend"></div>
+          <div class="chart-wrap"><canvas id="chart-risk-bt" role="img" aria-label="Daily returns against rolling VaR with breaches"></canvas></div>
+          <p class="legend-note">Each day's 1-day VaR is estimated from the previous 250 sessions only (no look-ahead); a breach is a realized loss larger than that VaR.</p>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <h2 class="card-title">Drawdown (Underwater) Chart</h2>
+          <div class="legend-row" id="risk-dd-legend"></div>
+          <div class="chart-wrap short"><canvas id="chart-risk-dd" role="img" aria-label="Drawdown from running peak"></canvas></div>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <h2 class="card-title">Correlation Heatmap</h2>
+          <div style="max-width:320px;margin-bottom:12px" class="seg" role="group" aria-label="Correlation frequency">
+            <button type="button" data-corr="weekly" aria-pressed="true">Weekly (used by optimizer)</button>
+            <button type="button" data-corr="daily" aria-pressed="false">Daily</button>
+          </div>
+          <div class="table-scroll"><table class="heatmap" id="risk-heatmap"></table></div>
+          <p class="legend-note" id="risk-corr-note"></p>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <h2 class="card-title">Historical Stress Scenarios</h2>
+          <p class="card-desc">Each sleeve's actual return over the crisis window, applied to today's weights. Badges show whether a sleeve's input is the live vehicle, a documented proxy, or an explicit assumption.</p>
+          <div class="table-scroll"><table class="data-table" id="risk-stress-table"></table></div>
+          <div class="legend-row" style="margin-top:14px"><span><span class="swatch" style="background:#e6edf7"></span>Selected portfolio</span><span><span class="swatch" style="background:#6b7a8f"></span>Nifty 50</span></div>
+          <div class="chart-wrap short"><canvas id="chart-risk-stress" role="img" aria-label="Stress scenario impact"></canvas></div>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <h2 class="card-title">Custom Hypothetical Shock</h2>
+          <p class="card-desc">Set an instantaneous shock per sleeve (risk-free leg unchanged) to see the impact on the selected portfolio.</p>
+          <div class="inline-inputs" id="risk-custom-sliders" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))"></div>
+          <div class="callout info" id="risk-custom-out"></div>
+        </div>
+      </div>
+    </div>
+
+    <details class="method">
+      <summary>Method — VaR, Expected Shortfall, backtesting and stress</summary>
+      <p><strong>Historical simulation.</strong> Today's weights applied to every daily return vector in the window (hypothetical P&amp;L).
+        h-day VaR uses overlapping compounded h-day returns. VaR = −q<sub>1−c</sub>; ES/CVaR = −mean of returns at or below that quantile.</p>
+      <div class="formula">Parametric: VaR = −(μ·h + z<sub>1−c</sub>·σ·√h),&nbsp;&nbsp; ES = −(μ·h − σ·√h·φ(z<sub>1−c</sub>)/(1−c))</div>
+      <p><strong>Kupiec proportion-of-failures test.</strong> With T days and x breaches at expected rate p = 1−c:
+        LR = −2 ln[(1−p)<sup>T−x</sup>p<sup>x</sup>] + 2 ln[(1−x/T)<sup>T−x</sup>(x/T)<sup>x</sup>] ~ χ²(1). A small p-value rejects the VaR model.
+        The Basel traffic light is reported on the last 250 days at 99%: green ≤ 4 breaches, yellow 5–9, red ≥ 10.</p>
+      <p><strong>Stress scenarios.</strong> COVID-19 and the 2022 rate shock use the live vehicles. For the 2008 window several vehicles did not
+        exist yet, so documented proxies are used (gold futures × USDINR for Indian gold, ACWI for global equity, BND for global bonds,
+        all converted to INR). No investable Indian bond series exists for 2008, so the Indian-debt shock is an <strong>explicit 0% assumption</strong>.
+        A leveraged portfolio's borrowing leg is charged the cash return plus the borrowing spread over the window.</p>
+      <p><strong>Caveat.</strong> Daily returns mix markets that close at different times (NSE vs US), which understates daily diversification
+        effects; the weekly correlation matrix is the better guide to true co-movement.</p>
+    </details>
   </section>
 
   <!-- ============ 04 PERFORMANCE ============ -->
@@ -270,6 +384,7 @@
 <script src="assets/js/state.js"></script>
 <script src="assets/js/profile.js"></script>
 <script src="assets/js/allocation.js"></script>
+<script src="assets/js/risk.js"></script>
 <script src="assets/js/main.js"></script>
 </body>
 </html>
