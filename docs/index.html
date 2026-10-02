@@ -450,7 +450,99 @@
 
   <!-- ============ 05 REBALANCING ============ -->
   <section class="tab-panel" id="panel-rebalance" role="tabpanel" aria-labelledby="tab-rebalance" hidden>
-    <p class="section-intro">Module in progress.</p>
+    <p class="section-intro">
+      Target weights do not stay put. Starting from the client's allocation on the first day of the window, this simulator lets
+      weights <strong>drift</strong> with real daily prices and compares <strong>buy-and-hold</strong>, <strong>tolerance-band rebalancing</strong>
+      (trade back to target when any sleeve drifts beyond the band) and <strong>calendar rebalancing</strong>, net of transaction costs.
+    </p>
+    <div class="panel-grid">
+      <div>
+        <div class="card">
+          <h2 class="card-title">Rebalancing Policy</h2>
+          <div class="control-group">
+            <div class="control-label"><span>Tolerance band</span><span class="value" id="rb-band-val">—</span></div>
+            <input type="range" id="rb-band" min="1" max="15" step="0.5" value="5" aria-label="Tolerance band" />
+            <div class="range-scale"><span id="rb-band-min">1</span><span id="rb-band-max">15</span></div>
+          </div>
+          <div class="control-group">
+            <div class="control-label"><span>Band definition</span></div>
+            <div class="seg" role="group" aria-label="Band definition">
+              <button type="button" data-bandtype="abs" aria-pressed="true">Absolute (pp)</button>
+              <button type="button" data-bandtype="rel" aria-pressed="false">Relative (%)</button>
+            </div>
+            <p class="legend-note" id="rb-band-note"></p>
+          </div>
+          <div class="control-group">
+            <label class="field-label" for="rb-check">Monitor drift</label>
+            <select class="text-input" id="rb-check">
+              <option value="daily" selected>Daily</option>
+              <option value="weekly">Weekly (last session of week)</option>
+              <option value="monthly">Monthly (last session of month)</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label class="field-label" for="rb-cal">Calendar strategy for comparison</label>
+            <select class="text-input" id="rb-cal">
+              <option value="monthly">Monthly</option>
+              <option value="quarterly" selected>Quarterly</option>
+              <option value="annual">Annual</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <div class="control-label"><span>Transaction cost</span><span class="value" id="rb-cost-val">—</span></div>
+            <input type="range" id="rb-cost" min="0" max="100" step="5" value="15" aria-label="Transaction cost in basis points" />
+            <div class="range-scale"><span>0 bp</span><span>100 bp per ₹ traded</span></div>
+          </div>
+          <div class="control-group">
+            <label class="field-label" for="rb-value">Starting value (₹)</label>
+            <input type="number" class="text-input" id="rb-value" min="100000" step="100000" value="10000000" />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2 class="card-title">Strategy Comparison</h2>
+          <div class="table-scroll"><table class="data-table" id="rb-table"></table></div>
+          <div class="callout info" id="rb-insight"></div>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <h2 class="card-title">Portfolio Value</h2>
+          <div class="legend-row" id="rb-value-legend"></div>
+          <div class="chart-wrap"><canvas id="chart-rb-value" role="img" aria-label="Portfolio value by strategy"></canvas></div>
+        </div>
+
+        <div class="chart-row two-col" style="margin-top:16px">
+          <div class="card">
+            <h2 class="card-title">Weight Drift</h2>
+            <div class="seg" role="group" aria-label="Strategy for weight chart" style="max-width:320px;margin-bottom:10px">
+              <button type="button" data-wview="bh" aria-pressed="true">Buy &amp; hold</button>
+              <button type="button" data-wview="band" aria-pressed="false">Band</button>
+            </div>
+            <div class="legend-row" id="rb-w-legend"></div>
+            <div class="chart-wrap"><canvas id="chart-rb-weights" role="img" aria-label="Sleeve weights over time"></canvas></div>
+          </div>
+          <div class="card">
+            <h2 class="card-title">Largest Deviation From Target</h2>
+            <div class="legend-row" id="rb-dev-legend"></div>
+            <div class="chart-wrap"><canvas id="chart-rb-dev" role="img" aria-label="Maximum absolute deviation from target weights"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <details class="method">
+      <summary>Method — drift, triggers and costs</summary>
+      <p>Each sleeve's holding compounds at its own daily INR return; the cash leg earns the liquid-fund return (or pays it plus the
+        borrowing spread if levered). On each monitoring date the band strategy checks every sleeve: absolute bands trigger when
+        |w − w*| exceeds the band in percentage points; relative bands when |w − w*| / w* exceeds the band in percent. When triggered,
+        the whole portfolio is traded back to target.</p>
+      <div class="formula">cost = c · Σ<sub>i</sub> |V·w<sub>i</sub> − V·w*<sub>i</sub>| &nbsp;&nbsp;(c in bp per rupee traded, one-way)</div>
+      <p>Costs proxy brokerage, exchange charges, STT and bid-ask spread on ETFs and large caps. <strong>Capital-gains tax on
+        rebalancing sales is not modeled</strong> — in a taxable Indian account it would further favour wider bands or rebalancing
+        with new cash flows.</p>
+    </details>
   </section>
 
   <!-- ============ 06 GOALS ============ -->
@@ -474,6 +566,7 @@
 <script src="assets/js/allocation.js"></script>
 <script src="assets/js/risk.js"></script>
 <script src="assets/js/performance.js"></script>
+<script src="assets/js/rebalance.js"></script>
 <script src="assets/js/main.js"></script>
 </body>
 </html>
