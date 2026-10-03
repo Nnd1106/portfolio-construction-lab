@@ -1177,3 +1177,135 @@ body.proposal-open { overflow: hidden; }
   #proposal .pp-text { margin-bottom: 6px; }
   #proposal .pp-list li { margin: 1px 0; }
 }
+
+/* =====================================================================
+ * Signature identity — matches the homepage flagship card.
+ * Values reused from nnd1106.github.io (.project-card.flagship, .btn.primary):
+ *   border gradient  linear-gradient(120deg, #00f0ff, #8b7bff 45%, #ff2ec4), 8s drift
+ *   glow             rgba(139, 123, 255, …)   title  #e6edf7 → #b9b0ff → #00f0ff
+ *   button fill      rgba(0,240,255,.16) → rgba(110,123,255,.12), cyan border/text
+ * Chrome only (header, buttons, tab indicator, brand mark). Cards, charts,
+ * tables and anything behind data keep their existing flat dark surfaces.
+ * ===================================================================== */
+:root {
+  --sig-gradient: linear-gradient(120deg, #00f0ff, #8b7bff 45%, #ff2ec4);
+  --sig-indigo: #8b7bff;
+}
+@keyframes sig-drift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* ---------- Header ---------- */
+.app-header.signature {
+  position: relative;
+  border-bottom: none;
+  background:
+    radial-gradient(70% 160% at 0% 0%, rgba(139, 123, 255, 0.14), transparent 60%),
+    radial-gradient(50% 140% at 100% 0%, rgba(0, 240, 255, 0.07), transparent 60%),
+    linear-gradient(180deg, #0a0d16, #070910);
+  box-shadow: 0 14px 40px -26px rgba(139, 123, 255, 0.55);
+}
+.app-header.signature::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 2px;
+  background: var(--sig-gradient);
+  background-size: 200% 200%;
+  animation: sig-drift 8s ease-in-out infinite;
+}
+.app-header.signature .brand h1 {
+  background: linear-gradient(90deg, #e6edf7 30%, #b9b0ff 75%, #00f0ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.brand-mark {
+  width: 46px;
+  height: 27px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 6px rgba(139, 123, 255, 0.45));
+}
+
+/* ---------- Signature button (homepage "Open platform") ---------- */
+.btn.signature {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.16), rgba(110, 123, 255, 0.12));
+  border: 1px solid var(--accent-cyan);
+  color: var(--accent-cyan);
+  font-weight: 600;
+  box-shadow: 0 10px 28px -12px rgba(0, 240, 255, 0.45);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+.btn.signature:hover {
+  color: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.24), rgba(110, 123, 255, 0.18));
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px -8px rgba(0, 240, 255, 0.35), 0 0 0 1px rgba(139, 123, 255, 0.25);
+}
+.btn.signature:active { transform: translateY(0); }
+.proposal-btn.signature { padding: 7px 13px; }
+
+/* ---------- Active tab: gradient indicator instead of a flat underline ---------- */
+.tab-btn { position: relative; }
+.tab-btn.active { border-bottom-color: transparent; }
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  left: 10px; right: 10px; bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--sig-gradient);
+  background-size: 200% 200%;
+  animation: sig-drift 8s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(139, 123, 255, 0.55);
+}
+
+/* ---------- Footer mark ---------- */
+.footer-brand { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--text-secondary); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; }
+.footer-mark { width: 30px; height: 18px; opacity: 0.85; }
+
+/* ---------- Boot loader: the mark draws itself while data loads ---------- */
+.boot {
+  position: fixed; inset: 0; z-index: 500;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  background: var(--page-bg);
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+.boot.done { opacity: 0; visibility: hidden; }
+.boot-mark { width: 120px; height: 70px; filter: drop-shadow(0 0 14px rgba(139, 123, 255, 0.5)); }
+.boot-mark .bm-front { stroke-dasharray: 260; stroke-dashoffset: 260; animation: bm-draw 1.4s ease-in-out infinite alternate; }
+.boot-mark .bm-cal { animation: bm-fade 1.4s ease-in-out infinite alternate; }
+.boot-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); max-width: 320px; text-align: center; }
+@keyframes bm-draw { to { stroke-dashoffset: 0; } }
+@keyframes bm-fade { from { opacity: 0.15; } to { opacity: 0.9; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .app-header.signature::after, .tab-btn.active::after { animation: none; }
+  .boot-mark .bm-front { animation: none; stroke-dashoffset: 0; }
+  .boot-mark .bm-cal { animation: none; }
+}
+@media print {
+  .boot { display: none !important; }
+}
+
+/* Seven tabs: keep them on one line without a visible scrollbar on laptops,
+   still swipeable on phones */
+.tab-nav { scrollbar-width: none; }
+.tab-nav::-webkit-scrollbar { display: none; }
+@media (max-width: 1180px) {
+  .tab-btn { padding: 12px 11px; letter-spacing: 0.04em; }
+}
+/* seven KPI tiles: one row from ~900px up instead of a lonely 7th tile */
+.kpi-strip { grid-template-columns: repeat(auto-fit, minmax(126px, 1fr)); }
+@media (max-width: 1180px) { .kpi-tile { padding: 11px 13px; } .kpi-tile .kpi-value { font-size: 17px; } }
+
+/* ---------- Market Data: stock picker for the drill-down ---------- */
+.drill-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border-soft); }
+.drill-toolbar .seg { width: auto; }
+.drill-toolbar .seg button { padding: 8px 14px; }
+.stock-picker { flex: 1; min-width: 260px; max-width: 520px; }
+.stock-picker-row { display: flex; gap: 6px; }
+.stock-picker-row select { flex: 1; font-size: 13px; padding: 9px 10px; }
+.picker-step { padding: 6px 12px; font-size: 16px; line-height: 1; }

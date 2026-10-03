@@ -42,6 +42,29 @@ def history(ticker, retries=3):
     return s
 
 
+_ohlc_cache = {}
+
+
+def history_ohlc(ticker, retries=3):
+    """Full daily adjusted Open/High/Low/Close history (tz-naive DataFrame; empty on failure)."""
+    if ticker in _ohlc_cache:
+        return _ohlc_cache[ticker]
+    df = pd.DataFrame()
+    for attempt in range(retries):
+        try:
+            raw = yf.Ticker(ticker).history(period="max", auto_adjust=True)
+            if raw is not None and not raw.empty:
+                df = raw[["Open", "High", "Low", "Close"]].dropna()
+                df.index = pd.to_datetime(df.index).tz_localize(None).normalize()
+                df = df[~df.index.duplicated(keep="last")].sort_index()
+                break
+        except Exception as exc:
+            print(f"  ! {ticker} OHLC attempt {attempt + 1} failed: {exc}")
+        time.sleep(1.5 * (attempt + 1))
+    _ohlc_cache[ticker] = df
+    return df
+
+
 def remove_bad_ticks(s, thr=C.SPIKE_THRESHOLD, max_len=5):
     """
     Drop spike-and-reversal glitches: a jump of more than `thr` that reverts

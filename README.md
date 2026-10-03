@@ -15,7 +15,7 @@ Dark, finance-terminal UI in vanilla HTML/CSS/JS + [Chart.js](https://www.chartj
 | # | Module | What it does |
 |---|---|---|
 | 01 | **Client Profile** | 8-question onboarding scored on two IPS dimensions: *willingness* (attitude) and *capacity* (ability) to bear risk. The lower one governs, and the score maps to the risk-aversion coefficient **A** in `U = E[r] − ½Aσ²`. Rule-based suitability notes and a recommended allocation. |
-| 02 | **Market Data** | Full transparency on the real instruments behind the platform: data freshness (last NSE/US close, pipeline run, next scheduled refresh), a card for every sleeve vehicle plus the benchmark, USD/INR and the risk-free NAV (last close, weekly change, 1-year sparkline, 52-week range, returns, volatility, expense ratio/AUM/P-E where available), relative performance rebased to 100, the **12-stock basket** (sortable table with latest closes, returns, 52-week range, beta, market cap, P/E, dividend yield; click-to-chart drill-down vs the Nifty; 12×12 correlation matrix; sector mix), rolling 52-week cross-asset correlations, macro & rates, and CSV/JSON downloads of every number. |
+| 02 | **Market Data** | Full transparency on the real instruments behind the platform: data freshness (last NSE/US close, pipeline run, next scheduled refresh), a card for every sleeve vehicle plus the benchmark, USD/INR and the risk-free NAV (last close, weekly change, 1-year sparkline, 52-week range, returns, volatility, expense ratio/AUM/P-E where available), relative performance rebased to 100, the **12-stock basket** (sortable table with latest closes, returns, 52-week range, beta, market cap, P/E, dividend yield; a stock selector driving a close-vs-Nifty line chart and a **candlestick (OHLC) chart** (daily candles for 3M/1Y, weekly for 3Y/All) plus per-stock tiles; 12×12 correlation matrix; sector mix), rolling 52-week cross-asset correlations, macro & rates, and CSV/JSON downloads of every number. |
 | 03 | **Allocation** | N-asset **efficient frontier** (SciPy SLSQP, long-only), **Minimum Variance Portfolio**, tangency **Optimal Risky Portfolio**, and the **Capital Allocation Line** from the risk-free rate. The client's optimal complete portfolio `y* = (E[r_P] − r_f)/(Aσ_P²)` is plotted with their indifference curve. If y* > 1 and leverage is off, the client moves up the frontier past the ORP; an optional kinked CAL handles borrowing at r_f + spread. Includes a frontier transition map and a Policy vs Textbook estimation toggle. |
 | 04 | **Risk & Stress** | Historical-simulation and parametric **VaR / CVaR** (any confidence, 1–20 day horizon), a rolling **VaR backtest** with the Kupiec POF test and Basel traffic light, Euler **risk contributions**, an underwater **drawdown** chart, a weekly/daily **correlation heatmap**, three **historical stress scenarios** (GFC 2008, COVID-19 2020, 2022 rate shock) applied to today's weights, and a custom shock builder. |
 | 05 | **Performance** | **Sharpe, Sortino, Treynor, Jensen's α, beta, tracking error, information ratio** vs the Nifty 50, plus a **Brinson-Fachler attribution** (allocation / selection / interaction) against a 50/30/10/10 policy benchmark, linked across months with Carino smoothing so the effects sum exactly to the active return. |
@@ -49,6 +49,10 @@ The common window starts at the Bharat Bond ETF's listing (Dec 2019), so it cove
 
 ---
 
+## Visual identity
+
+The tool shares its signature look with its flagship card on the portfolio homepage. The cyan → indigo → magenta gradient (`#00f0ff → #8b7bff → #ff2ec4`) runs along the header edge and the active-tab indicator, the report buttons use the same signature style as the homepage's "Open platform" button, and a small efficient-frontier mark (MVP · ORP · CAL from rf) serves as the logo, favicon and loading animation. It's applied to chrome only: charts, tables and every surface behind data keep the plain dark theme for readability.
+
 ## Architecture
 
 ```
@@ -57,7 +61,8 @@ GitHub Actions (weekly, Sat 08:00 IST — after the US Friday close)
        ├─ fetch.py      yfinance download → bad-tick filter → fallbacks → INR conversion
        │                → daily panel on the NSE calendar (as-of alignment for US assets)
        ├─ market.py     per-instrument snapshot: last close, period returns, 52W range, vol, beta,
-       │                optional fundamentals, daily close history, basket correlations, rolling correlations
+       │                optional fundamentals, daily close history, basket correlations, rolling correlations,
+       │                OHLC candles for the 12 stocks (400 days daily + full-window weekly, validated)
        ├─ analytics.py  weekly returns → Bayes-Stein means → SLSQP frontier / MVP / ORP
        │                → stress windows (live vehicle, documented proxy, or explicit assumption)
        │                → reference risk metrics for browser parity checks

@@ -101,6 +101,62 @@ def describe(series, bench_daily=None, fetch_info=None):
     return out
 
 
+def ohlc_block(basket_meta, start):
+    """
+    Candlestick data for the basket stocks, column-oriented with one shared
+    date array per resolution:
+      daily  — last C.OHLC_DAILY_DAYS calendar days (3M / 1Y views)
+      weekly — Friday-ending weeks over the common window (3Y / All views)
+    Rows on dates the close-series bad-tick filter removed are dropped, and
+    any candle violating low <= min(open, close) <= max(open, close) <= high
+    (or with a non-positive price) is nulled and counted, never repaired.
+    """
+    frames, checks = {}, {"invalid_daily": 0, "invalid_weekly": 0, "max_close_mismatch": 0.0}
+    for b in basket_meta:
+        t = b["ticker"]
+        df = F.history_ohlc(t)
+        if df.empty:
+            print(f"  ! no OHLC for {t}")
+            continue
+        _, dropped = F.remove_bad_ticks(df["Close"])
+        df = df.drop(index=pd.to_datetime(dropped), errors="ignore")
+        df = df[df.index >= start]
+        # the candle close must be the same adjusted close the rest of the platform uses
+        close = F.history(t)
+        common = df.index.intersection(close.index)
+        if len(common):
+            mism = float((df.loc[common, "Close"] / close.loc[common] - 1).abs().max())
+            checks["max_close_mismatch"] = max(checks["max_close_mismatch"], mism)
+        frames[t] = df
+
+    def valid(d):
+        lo, hi = d[["Open", "Close"]].min(axis=1), d[["Open", "Close"]].max(axis=1)
+        return (d["Low"] <= lo + 1e-9) & (hi <= d["High"] + 1e-9) & (d > 0).all(axis=1)
+
+    def pack(per_stock, key):
+        dates = sorted(set().union(*[set(d.index) for d in per_stock.values()]))
+        idx = pd.DatetimeIndex(dates)
+        series = {}
+        for t, d in per_stock.items():
+            ok = valid(d)
+            checks[key] += int((~ok).sum())
+            d = d.where(ok).reindex(idx)
+            def col(c):
+                return [None if not np.isfinite(v) else round(float(v), 2) for v in d[c].values]
+            series[t] = {"o": col("Open"), "h": col("High"), "l": col("Low"), "c": col("Close")}
+        return {"dates": [x.date().isoformat() for x in idx], "series": series}
+
+    last = max(d.index[-1] for d in frames.values())
+    daily = {t: d[d.index > last - pd.Timedelta(days=C.OHLC_DAILY_DAYS)] for t, d in frames.items()}
+    weekly = {t: d.resample("W-FRI").agg({"Open": "first", "High": "max", "Low": "min", "Close": "last"}).dropna()
+              for t, d in frames.items()}
+    out = {"daily_days": C.OHLC_DAILY_DAYS, "daily": pack(daily, "invalid_daily"), "weekly": pack(weekly, "invalid_weekly")}
+    out["checks"] = checks
+    print(f"  OHLC: {len(frames)} stocks, {len(out['daily']['dates'])} daily / {len(out['weekly']['dates'])} weekly candles, "
+          f"invalid {checks['invalid_daily']}/{checks['invalid_weekly']}, max close mismatch {checks['max_close_mismatch']:.2e}")
+    return out
+
+
 def build_market(panel, basket_px, basket_meta, log):
     print("Market snapshot")
     cal = panel.index
@@ -189,6 +245,7 @@ def build_market(panel, basket_px, basket_meta, log):
         },
         "basket": {"tickers": tick, "corr_weekly": corr.tolist(), "corr_nifty": corr_nifty, "sectors": sectors},
         "rolling_corr": {"window_weeks": 52, "dates": roll_dates, "pairs": roll},
+        "ohlc": ohlc_block(basket_meta, cal[0]),
         "source": "Yahoo Finance via yfinance (keyless), fetched server-side by GitHub Actions",
         "schedule": {"cron_utc": "30 2 * * 6", "label": "Every Saturday 08:00 IST"},
     }

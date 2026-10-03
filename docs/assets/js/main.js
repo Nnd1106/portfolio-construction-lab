@@ -7,7 +7,15 @@
 (function () {
   'use strict';
 
-  if (!window.PCL_DATA) {
+  const boot = document.getElementById('boot');
+  const hideBoot = () => {
+    if (!boot) return;
+    boot.classList.add('done');
+    setTimeout(() => boot.remove(), 450);
+  };
+
+  if (!window.PCL_DATA || typeof Chart === 'undefined') {
+    if (boot) boot.querySelector('.boot-label').textContent = 'Could not load the market data or chart library — please refresh.';
     document.querySelector('main').innerHTML =
       '<p class="section-intro" style="padding:24px">Data file failed to load (docs/data/portfolio-data.js).</p>';
     return;
@@ -76,7 +84,7 @@
     const nav = document.createElement('div');
     nav.className = 'step-nav';
     nav.innerHTML = (prev ? `<button type="button" class="btn" data-goto="${prev.dataset.tab}">← ${esc(prev.textContent)}</button>` : '<span></span>') +
-      (next ? `<button type="button" class="btn primary" data-goto="${next.dataset.tab}">Next: ${esc(next.textContent)} →</button>` : '');
+      (next ? `<button type="button" class="btn signature" data-goto="${next.dataset.tab}">Next: ${esc(next.textContent)} →</button>` : '');
     panel.appendChild(nav);
   });
   document.addEventListener('click', (e) => {
@@ -143,6 +151,8 @@
   renderKpis();
   const fromHash = (location.hash || '').slice(1);
   activateTab(MODULES.hasOwnProperty(fromHash) ? fromHash : 'profile');
+
+  hideBoot();
 
   // ?report=explain | proposal opens a report directly (shareable link, print automation)
   const report = new URLSearchParams(location.search).get('report');

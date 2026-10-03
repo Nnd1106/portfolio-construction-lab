@@ -118,7 +118,7 @@ const Market = {
         return;
       }
       const tr = e.target.closest('tr[data-t]');
-      if (tr) { this.drill = tr.dataset.t; this.renderTable(); this.renderDrill(); $('mkt-drill-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+      if (tr) { this.selectStock(tr.dataset.t); $('mkt-drill-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
     });
     $('mkt-basket-table').addEventListener('keydown', (e) => {
       const tr = e.target.closest('tr[data-t]');
@@ -128,7 +128,47 @@ const Market = {
       const b = e.target.closest('[data-dl]');
       if (b) this.download(b.dataset.dl);
     });
+    // Stock selector (alphabetical) with previous / next stepping
+    const byName = this.stocks().slice().sort((a, b) => a.name.localeCompare(b.name));
+    this.stockOrder = byName.map((x) => x.key);
+    $('mkt-stock-select').innerHTML = byName.map((x) =>
+      `<option value="${esc(x.key)}">${esc(x.name)} — ${esc(this.short(x.ticker))} · ${esc(x.sector)}</option>`).join('');
+    $('mkt-stock-select').addEventListener('change', (e) => this.selectStock(e.target.value));
+    const step = (d) => {
+      const i = this.stockOrder.indexOf(this.drill);
+      this.selectStock(this.stockOrder[(i + d + this.stockOrder.length) % this.stockOrder.length]);
+    };
+    $('mkt-stock-prev').addEventListener('click', () => step(-1));
+    $('mkt-stock-next').addEventListener('click', () => step(1));
     this.drill = this.stocks()[0].key;
+  },
+
+  /** One path for every way of choosing a stock: dropdown, arrows, table row. */
+  selectStock(key) {
+    if (!this.inst(key)) return;
+    this.drill = key;
+    $('mkt-stock-select').value = key;
+    document.querySelectorAll('#mkt-basket-table tr[data-t]').forEach((tr) => tr.classList.toggle('selected', tr.dataset.t === key));
+    this.renderDrill();
+  },
+
+  /** About one x-axis label per 90px of chart width (3 on a phone, 8 on desktop). */
+  tickLimit(id) {
+    const w = ($(id) && $(id).parentElement.clientWidth) || 800;
+    return Math.max(3, Math.min(8, Math.floor(w / 90)));
+  },
+
+  /** Create a chart once, then update it in place (no destroy/re-create flash). */
+  drawInPlace(id, type, data, options) {
+    const ch = chartRegistry[id];
+    if (ch && ch.config.type === type) {
+      ch.data.labels = data.labels;
+      ch.data.datasets = data.datasets;
+      ch.options = options;
+      ch.update('none');
+      return ch;
+    }
+    return upsertChart(id, { type, data, options });
   },
 
   /* ---------------- sections ---------------- */
@@ -153,7 +193,7 @@ const Market = {
       tile('Last close · NSE', esc(fmtDate(nse)), 'Indian stocks &amp; ETFs'),
       tile('Last close · US', esc(fmtDate(us)), 'URTH, BNDX (USD)'),
       tile('Pipeline run', esc(ist(gen)), `<span class="status-chip ${fresh ? 'good' : 'warning'}">${fresh ? '✓ Fresh' : '! Stale'} · ${ageDays < 1 ? 'today' : Math.floor(ageDays) + 'd ago'}</span>`),
-      tile('Next refresh', esc(ist(next)), `${untilNext} · ${esc(this.M.schedule.label)}`),
+      tile('Next refresh', esc(ist(next)), `scheduled · ${untilNext} · GitHub often starts scheduled jobs a few hours late`),
       tile('Models computed through', esc(fmtDate(DATA.meta.as_of)), 'last date every series has a close'),
       tile('Coverage', `${this.M.instruments.length} instruments`, `${fallbacks ? fallbacks + ' fallback ticker(s)' : 'no fallbacks needed'} · ${ticks} bad ticks removed`),
       tile('Source', 'Yahoo Finance', 'via yfinance · keyless · server-side'),
@@ -335,19 +375,18 @@ const Market = {
       datasets.push({ label: '52W high', data: px.map(() => i.hi52), borderColor: alpha(POS_COLOR, 0.7), borderDash: [2, 3], pointRadius: 0, borderWidth: 1 });
       datasets.push({ label: '52W low', data: px.map(() => i.lo52), borderColor: alpha(NEG_COLOR, 0.7), borderDash: [2, 3], pointRadius: 0, borderWidth: 1 });
     }
-    upsertChart('chart-mkt-drill', {
-      type: 'line',
-      data: { labels: dates.slice(s), datasets },
-      options: {
-        animation: false,
-        interaction: { mode: 'index', intersect: false },
-        scales: {
-          x: { ticks: { maxTicksLimit: 8, callback(v) { return this.getLabelForValue(v).slice(0, 7); } }, grid: { display: false } },
-          y: { ticks: { callback: (v) => '₹' + Number(v).toLocaleString('en-IN') }, grid: { color: INK.grid } },
-        },
-        plugins: { tooltip: { callbacks: { title: (it) => fmtDate(it[0].label), label: (it) => (it.raw == null ? null : `${it.dataset.label}: ₹${it.raw.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`) } } },
+    // month labels as "Feb '26" — same unambiguous style as the candlestick axis below
+    const monthLabel = (iso) => new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', { month: 'short' }) + " '" + iso.slice(2, 4);
+    this.drawInPlace('chart-mkt-drill', 'line', { labels: dates.slice(s), datasets }, {
+      animation: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: { ticks: { maxTicksLimit: this.tickLimit('chart-mkt-drill'), maxRotation: 0, autoSkipPadding: 14, callback(v) { return monthLabel(this.getLabelForValue(v)); } }, grid: { display: false } },
+        y: { ticks: { callback: (v) => '₹' + Number(v).toLocaleString('en-IN') }, grid: { color: INK.grid } },
       },
+      plugins: { tooltip: { callbacks: { title: (it) => fmtDate(it[0].label), label: (it) => (it.raw == null ? null : `${it.dataset.label}: ₹${it.raw.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`) } } },
     });
+    this.renderCandles(i);
     const info = i.info || {};
     $('mkt-drill-title').textContent = `${i.name} — ${this.short(i.ticker)} · ${i.sector}`;
     $('mkt-drill-legend').innerHTML = `<span><span class="line-key" style="border-color:${INK.primary}"></span>${esc(i.name)} close</span>
@@ -361,6 +400,83 @@ const Market = {
       box('Risk (1Y)', `σ ${fmtPct(i.vol_1y, 1)} · β ${fmtNum(i.beta_1y, 2)}`, `max drawdown ${fmtPct(i.max_dd_1y, 1)}`),
       box('Valuation', info.pe != null ? `P/E ${info.pe.toFixed(1)}${info.pb != null ? ` · P/B ${info.pb.toFixed(1)}` : ''}` : '—', `${this.mcap(info.market_cap)}${info.industry ? ' · ' + esc(info.industry) : ''}`),
     ].join('');
+  },
+
+  /**
+   * Candlestick (OHLC) chart for the selected stock on the shared period toggle.
+   * 3M / 1Y use daily candles; 3Y / All use Friday-ending weekly candles (1,700
+   * daily candles would be unreadable at that width). Up candles use the tab's
+   * gain colour (blue) and down candles its loss colour (red) — the same CVD-safe
+   * diverging pair as the 1-year return chart, rather than red/green.
+   */
+  renderCandles(i) {
+    const O = this.M.ohlc;
+    if (typeof Chart.registry.controllers.get('candlestick') === 'undefined' || !O) {
+      $('mkt-candle-note').textContent = 'Candlestick data or the chart plugin is unavailable.';
+      return;
+    }
+    const weekly = this.drillRange === '3Y' || this.drillRange === 'All';
+    const blk = weekly ? O.weekly : O.daily;
+    const ser = blk.series[i.key];
+    let pts = [];
+    if (ser) {
+      const lastD = new Date(blk.dates[blk.dates.length - 1] + 'T00:00:00');
+      const days = { '3M': 91, '1Y': 365, '3Y': 1096 }[this.drillRange];
+      const cut = days ? new Date(lastD.getTime() - days * 864e5).toISOString().slice(0, 10) : '';
+      for (let t = 0; t < blk.dates.length; t++) {
+        if (blk.dates[t] < cut || ser.c[t] == null) continue;
+        pts.push({ x: Date.parse(blk.dates[t] + 'T00:00:00'), o: ser.o[t], h: ser.h[t], l: ser.l[t], c: ser.c[t] });
+      }
+    }
+    this.lastCandles = pts;
+    const ups = pts.filter((p) => p.c > p.o).length, downs = pts.filter((p) => p.c < p.o).length;
+    const unit = weekly ? (this.drillRange === 'All' ? 'year' : 'quarter') : (this.drillRange === '3M' ? 'week' : 'month');
+    this.drawInPlace('chart-mkt-candle', 'candlestick', {
+      datasets: [{
+        label: i.name,
+        data: pts,
+        backgroundColors: { up: POS_COLOR, down: NEG_COLOR, unchanged: INK.secondary },
+        borderColors: { up: POS_COLOR, down: NEG_COLOR, unchanged: INK.secondary },
+        borderWidth: 1,
+      }],
+    }, {
+      animation: false,
+      parsing: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: {
+          type: 'timeseries',
+          time: { unit, displayFormats: { week: "d MMM ''yy", month: "MMM ''yy", quarter: "MMM ''yy", year: 'yyyy' } },
+          ticks: { maxTicksLimit: this.tickLimit('chart-mkt-candle'), source: 'auto', maxRotation: 0, autoSkipPadding: 14 },
+          grid: { display: false },
+        },
+        y: { ticks: { callback: (v) => '₹' + Number(v).toLocaleString('en-IN') }, grid: { color: INK.grid } },
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (it) => {
+              const d = new Date(it[0].raw.x);
+              const iso = new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+              return weekly ? `Week ending ${fmtDate(iso)}` : fmtDate(iso);
+            },
+            label: (it) => {
+              const p = it.raw;
+              const f = (v) => '₹' + v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+              return [`Open ${f(p.o)}   High ${f(p.h)}`, `Low  ${f(p.l)}   Close ${f(p.c)}`, `${p.c >= p.o ? '▲' : '▼'} ${fmtSignedPct(p.c / p.o - 1, 2)} ${weekly ? 'over the week' : 'on the day'}`];
+            },
+          },
+        },
+      },
+    });
+    $('mkt-candle-res').textContent = weekly ? 'weekly candles' : 'daily candles';
+    $('mkt-candle-legend').innerHTML = `<span><span class="swatch" style="background:${POS_COLOR}"></span>Up ${weekly ? 'week' : 'day'} (close above open) · ${ups}</span>
+      <span><span class="swatch" style="background:${NEG_COLOR}"></span>Down ${weekly ? 'week' : 'day'} (close below open) · ${downs}</span>
+      <span style="color:var(--text-muted)">Body = open→close · wick = high/low</span>`;
+    $('mkt-candle-note').textContent = weekly
+      ? `${pts.length} weekly candles (Friday-ending weeks) — daily candles are kept for the last ${O.daily_days} days and used for the 3M and 1Y views.`
+      : `${pts.length} daily candles. Dividend- and split-adjusted prices, so the close matches the line chart above.`;
   },
 
   renderCorr() {
@@ -503,7 +619,7 @@ const Market = {
     this.renderRel();
     this.renderBasketStats();
     this.renderTable();
-    this.renderDrill();
+    this.selectStock(this.drill);
     this.renderCorr();
     this.renderSectors();
     this.renderRolling();

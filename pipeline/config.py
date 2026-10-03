@@ -138,3 +138,9 @@ STRESS_SCENARIOS = [
 ]
 
 SPIKE_THRESHOLD = 0.40  # single-day spike-and-reversal filter (bad ticks; real glitches are 50-99% moves)
+
+# Candlestick data for the 12 basket stocks: daily candles over this many
+# calendar days (covers the 3M and 1Y views with a buffer) plus weekly candles
+# over the full common window (3Y / All views). Full daily OHLC for 6.75 years
+# would add ~289 KB gzipped to the page for candles too dense to read.
+OHLC_DAILY_DAYS = 400

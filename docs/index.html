@@ -5,23 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Portfolio Construction Lab — Multi-Asset Wealth Platform</title>
 <meta name="description" content="Multi-asset portfolio construction platform for an Indian investor: client risk profiling, N-asset efficient frontier and Capital Allocation Line, VaR/CVaR and stress testing, performance attribution, rebalancing and goals-based Monte Carlo planning — built on real market data." />
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%2305070b'/%3E%3Cpath d='M18 78 Q30 30 82 22' stroke='%2300f0ff' stroke-width='8' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='52' cy='38' r='8' fill='%23ff2ec4'/%3E%3C/svg%3E" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%2305070b'/%3E%3Cg transform='translate%282 8%29 scale%280.53%29'%3E%3Cline x1='14' y1='85.1' x2='170.2' y2='8' stroke='%23ff2ec4' stroke-width='9' stroke-dasharray='16 12' stroke-linecap='round'/%3E%3Cpath d='M83.6 93.7 L79.6 91.6 L75.9 89.5 L72.4 87.4 L69.1 85.3 L66.2 83.2 L63.7 81.1 L61.6 79.0 L60.0 76.9 L59.0 74.8 L58.6 72.7 L58.8 70.5 L59.6 68.4 L61.0 66.3 L62.9 64.2 L65.3 62.1 L68.0 60.0 L71.2 57.9 L74.6 55.8 L78.3 53.7 L82.2 51.6 L86.2 49.5 L90.5 47.4 L94.8 45.3 L99.2 43.2 L103.7 41.1 L108.3 39.0 L113.0 36.8 L117.7 34.7 L122.5 32.6 L127.3 30.5 L132.1 28.4 L137.0 26.3 L141.9 24.2 L146.9 22.1 L151.8 20.0 L156.8 17.9 L161.8 15.8 L166.8 13.7 L171.9 11.6' fill='none' stroke='%2300f0ff' stroke-width='13' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='79' y='36.3' width='22.4' height='22.4' transform='rotate%2845 90.2 47.5%29' fill='%238b7bff' stroke='%2305070b' stroke-width='4'/%3E%3C/g%3E%3C/svg%3E" />
 <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body>
+<div class="boot" id="boot" role="status" aria-live="polite"><svg class="boot-mark" viewBox="4 0 176 100" aria-hidden="true" focusable="false"><defs><linearGradient id="bm-boot" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#00f0ff"/><stop offset="1" stop-color="#8b7bff"/></linearGradient></defs><line class="bm-cal" x1="14" y1="85.1" x2="170.2" y2="8" stroke="#ff2ec4" stroke-width="5" stroke-dasharray="11 9" stroke-linecap="round" opacity="0.9"/><path class="bm-front" d="M83.6 93.7 L79.6 91.6 L75.9 89.5 L72.4 87.4 L69.1 85.3 L66.2 83.2 L63.7 81.1 L61.6 79.0 L60.0 76.9 L59.0 74.8 L58.6 72.7 L58.8 70.5 L59.6 68.4 L61.0 66.3 L62.9 64.2 L65.3 62.1 L68.0 60.0 L71.2 57.9 L74.6 55.8 L78.3 53.7 L82.2 51.6 L86.2 49.5 L90.5 47.4 L94.8 45.3 L99.2 43.2 L103.7 41.1 L108.3 39.0 L113.0 36.8 L117.7 34.7 L122.5 32.6 L127.3 30.5 L132.1 28.4 L137.0 26.3 L141.9 24.2 L146.9 22.1 L151.8 20.0 L156.8 17.9 L161.8 15.8 L166.8 13.7 L171.9 11.6" fill="none" stroke="url(#bm-boot)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="14" cy="85.1" r="8" fill="#6b7a8f"/><circle cx="58.5" cy="72.3" r="7.5" fill="#9fb0c3"/><rect x="81" y="38.3" width="18.4" height="18.4" transform="rotate(45 90.2 47.5)" fill="#8b7bff" stroke="#05070b" stroke-width="3"/></svg><span class="boot-label">Loading market data…</span></div>
 <a class="skip-link" href="#main-content">Skip to main content</a>
 
-<header class="app-header">
+<header class="app-header signature">
   <div class="brand">
-    <span class="dot" aria-hidden="true"></span>
+    <svg class="brand-mark" viewBox="4 0 176 100" aria-hidden="true" focusable="false"><defs><linearGradient id="bm-head" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#00f0ff"/><stop offset="1" stop-color="#8b7bff"/></linearGradient></defs><line class="bm-cal" x1="14" y1="85.1" x2="170.2" y2="8" stroke="#ff2ec4" stroke-width="5" stroke-dasharray="11 9" stroke-linecap="round" opacity="0.9"/><path class="bm-front" d="M83.6 93.7 L79.6 91.6 L75.9 89.5 L72.4 87.4 L69.1 85.3 L66.2 83.2 L63.7 81.1 L61.6 79.0 L60.0 76.9 L59.0 74.8 L58.6 72.7 L58.8 70.5 L59.6 68.4 L61.0 66.3 L62.9 64.2 L65.3 62.1 L68.0 60.0 L71.2 57.9 L74.6 55.8 L78.3 53.7 L82.2 51.6 L86.2 49.5 L90.5 47.4 L94.8 45.3 L99.2 43.2 L103.7 41.1 L108.3 39.0 L113.0 36.8 L117.7 34.7 L122.5 32.6 L127.3 30.5 L132.1 28.4 L137.0 26.3 L141.9 24.2 L146.9 22.1 L151.8 20.0 L156.8 17.9 L161.8 15.8 L166.8 13.7 L171.9 11.6" fill="none" stroke="url(#bm-head)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="14" cy="85.1" r="8" fill="#6b7a8f"/><circle cx="58.5" cy="72.3" r="7.5" fill="#9fb0c3"/><rect x="81" y="38.3" width="18.4" height="18.4" transform="rotate(45 90.2 47.5)" fill="#8b7bff" stroke="#05070b" stroke-width="3"/></svg>
     <div>
       <h1>Portfolio Construction Lab</h1>
       <div class="sub">Multi-Asset Allocation · Risk · Planning — INR · data as of <span class="as-of" id="as-of">—</span></div>
     </div>
   </div>
   <div class="market-clock">
-    <button type="button" class="btn proposal-btn" id="open-explain" title="A plain-language report for clients without a finance background">Explain My Portfolio ↗</button>
-    <button type="button" class="btn primary proposal-btn" id="open-proposal">Client Proposal ↗</button>
+    <button type="button" class="btn signature proposal-btn" id="open-explain" title="A plain-language report for clients without a finance background">Explain My Portfolio ↗</button>
+    <button type="button" class="btn signature proposal-btn" id="open-proposal">Client Proposal ↗</button>
     <span class="live-badge" title="Market data refreshed weekly by a scheduled pipeline">REAL DATA</span>
     <span id="clock">--:--:--</span>
   </div>
@@ -167,7 +168,7 @@
     </div>
 
     <h2 class="block-title">The 12-Stock Indian Equity Basket</h2>
-    <p class="block-sub">Equal-weighted (8.33% each) and rebalanced monthly, chosen to span nine sectors of the Nifty 50. Click any row to chart that stock; click a column header to sort.</p>
+    <p class="block-sub">Equal-weighted (8.33% each) and rebalanced monthly, chosen to span nine sectors of the Nifty 50. Pick a stock in the chart card below (or click any row); click a column header to sort.</p>
     <div class="stat-row" id="mkt-basket-stats"></div>
     <div class="card">
       <h2 class="card-title">Constituents — Latest Close &amp; Statistics</h2>
@@ -176,13 +177,31 @@
     </div>
 
     <div class="card" style="margin-top:16px" id="mkt-drill-card">
-      <h2 class="card-title" id="mkt-drill-title">Stock Chart</h2>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between">
-        <div class="legend-row" id="mkt-drill-legend" style="margin:0"></div>
-        <div class="seg" role="group" aria-label="Chart range" id="mkt-drill-range" style="max-width:260px"></div>
+      <div class="drill-toolbar">
+        <div class="stock-picker">
+          <label class="field-label" for="mkt-stock-select">Stock</label>
+          <div class="stock-picker-row">
+            <button type="button" class="btn picker-step" id="mkt-stock-prev" aria-label="Previous stock">‹</button>
+            <select class="text-input" id="mkt-stock-select"></select>
+            <button type="button" class="btn picker-step" id="mkt-stock-next" aria-label="Next stock">›</button>
+          </div>
+        </div>
+        <div>
+          <span class="field-label">Period (both charts)</span>
+          <div class="seg" role="group" aria-label="Chart period" id="mkt-drill-range"></div>
+        </div>
       </div>
-      <div class="chart-wrap" style="margin-top:10px"><canvas id="chart-mkt-drill" role="img" aria-label="Selected stock price chart"></canvas></div>
-      <div class="stat-row" id="mkt-drill-stats" style="margin-top:12px;margin-bottom:0"></div>
+
+      <h2 class="card-title" id="mkt-drill-title">Stock Chart</h2>
+      <div class="legend-row" id="mkt-drill-legend"></div>
+      <div class="chart-wrap"><canvas id="chart-mkt-drill" role="img" aria-label="Selected stock closing price versus the Nifty 50"></canvas></div>
+
+      <h2 class="card-title" style="margin-top:20px">Candlestick (OHLC) — <span id="mkt-candle-res">daily candles</span></h2>
+      <div class="legend-row" id="mkt-candle-legend"></div>
+      <div class="chart-wrap"><canvas id="chart-mkt-candle" role="img" aria-label="Candlestick chart of the selected stock"></canvas></div>
+      <p class="legend-note" id="mkt-candle-note"></p>
+
+      <div class="stat-row" id="mkt-drill-stats" style="margin-top:14px;margin-bottom:0"></div>
     </div>
 
     <div class="chart-row two-col" style="margin-top:16px">
@@ -756,6 +775,7 @@
 </main>
 
 <footer class="footer-note">
+  <div class="footer-brand"><svg class="footer-mark" viewBox="4 0 176 100" aria-hidden="true" focusable="false"><defs><linearGradient id="bm-foot" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#00f0ff"/><stop offset="1" stop-color="#8b7bff"/></linearGradient></defs><line class="bm-cal" x1="14" y1="85.1" x2="170.2" y2="8" stroke="#ff2ec4" stroke-width="5" stroke-dasharray="11 9" stroke-linecap="round" opacity="0.9"/><path class="bm-front" d="M83.6 93.7 L79.6 91.6 L75.9 89.5 L72.4 87.4 L69.1 85.3 L66.2 83.2 L63.7 81.1 L61.6 79.0 L60.0 76.9 L59.0 74.8 L58.6 72.7 L58.8 70.5 L59.6 68.4 L61.0 66.3 L62.9 64.2 L65.3 62.1 L68.0 60.0 L71.2 57.9 L74.6 55.8 L78.3 53.7 L82.2 51.6 L86.2 49.5 L90.5 47.4 L94.8 45.3 L99.2 43.2 L103.7 41.1 L108.3 39.0 L113.0 36.8 L117.7 34.7 L122.5 32.6 L127.3 30.5 L132.1 28.4 L137.0 26.3 L141.9 24.2 L146.9 22.1 L151.8 20.0 L156.8 17.9 L161.8 15.8 L166.8 13.7 L171.9 11.6" fill="none" stroke="url(#bm-foot)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="14" cy="85.1" r="8" fill="#6b7a8f"/><circle cx="58.5" cy="72.3" r="7.5" fill="#9fb0c3"/><rect x="81" y="38.3" width="18.4" height="18.4" transform="rotate(45 90.2 47.5)" fill="#8b7bff" stroke="#05070b" stroke-width="3"/></svg><span>Portfolio Construction Lab</span></div>
   <div><strong>Data.</strong> <span id="footer-dq">—</span></div>
   <div style="margin-top:6px"><strong>Disclaimer.</strong> An independent educational project applying investment-analysis and
     financial-risk-management coursework. Historical estimates are not forecasts, and nothing here is investment advice.</div>
@@ -766,7 +786,7 @@
     <div class="proposal-toolbar">
       <span id="proposal-title">Client Investment Proposal</span>
       <label>Investment (₹) <input type="number" class="text-input" id="proposal-amount" min="0" step="100000" value="10000000" /></label>
-      <button type="button" class="btn primary" id="proposal-print">Print / Save as PDF</button>
+      <button type="button" class="btn signature" id="proposal-print">Print / Save as PDF</button>
       <button type="button" class="btn" id="proposal-close" aria-label="Close proposal">Close ✕</button>
     </div>
     <div class="proposal-body" id="proposal-body"></div>
@@ -779,7 +799,7 @@
       <span id="explain-title">Explain My Portfolio</span>
       <label>Client name <input type="text" class="text-input" id="explain-name" maxlength="60" placeholder="Sample Client" /></label>
       <label>Amount invested (₹) <input type="number" class="text-input" id="explain-amount" min="0" step="100000" /></label>
-      <button type="button" class="btn primary" id="explain-print">Print / Save as PDF</button>
+      <button type="button" class="btn signature" id="explain-print">Print / Save as PDF</button>
       <button type="button" class="btn" id="explain-close" aria-label="Close report">Close ✕</button>
     </div>
     <div class="proposal-body explain-body" id="explain-body"></div>
@@ -787,6 +807,8 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.2.1/dist/chartjs-chart-financial.min.js"></script>
 <script src="data/portfolio-data.js"></script>
 <script src="assets/js/utils.js"></script>
 <script src="assets/js/state.js"></script>
