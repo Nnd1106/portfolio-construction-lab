@@ -197,7 +197,8 @@ def main():
                       "vol": float(D["BENCH"].std(ddof=1) * np.sqrt(C.TRADING_DAYS))},
         "risk_free": {"current_annual": rf_now, "source": rf_source,
                       "ticker": log["risk_free"]["ticker"], "by_year": rf_by_year},
-        "estimation": {"weeks": T, "bayes_stein": {"phi": phi, "mu0_annual": mu0 * ann},
+        "estimation": {"weeks": T, "week_end": W.index[-1].date().isoformat(),
+                       "bayes_stein": {"phi": phi, "mu0_annual": mu0 * ann},
                        "cov": cov.tolist(), "corr_weekly": corr_weekly.tolist(),
                        "corr_daily": corr_daily.tolist()},
         "models": models,
@@ -214,6 +215,24 @@ def main():
     out = round_tree(out)
 
     os.makedirs(OUT_DIR, exist_ok=True)
+    # On market holidays no instrument has a new close; keep the existing file so
+    # the daily job doesn't commit an empty refresh. (Yahoo's adjusted prices
+    # jitter in the 6th decimal between calls, so compare closes, not raw bytes.)
+    json_path = os.path.join(OUT_DIR, "portfolio-data.json")
+
+    def close_signature(d):
+        m = d.get("market") or {}
+        inst = sorted((i["key"], i["last_date"], round(i["last"], 4)) for i in m.get("instruments", []))
+        return [d.get("schema_version"), d["meta"]["as_of"], d["estimation"].get("week_end"), inst]
+
+    if os.path.exists(json_path):
+        try:
+            prev = json.load(open(json_path, encoding="utf-8"))
+            if close_signature(prev) == close_signature(out):
+                print("\nNo new market closes since the last run — data files left as they are.")
+                return
+        except Exception:
+            pass
     js = json.dumps(out, separators=(",", ":"), allow_nan=False)
     with open(os.path.join(OUT_DIR, "portfolio-data.json"), "w", encoding="utf-8") as fh:
         fh.write(js)

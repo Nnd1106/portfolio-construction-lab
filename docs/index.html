@@ -23,7 +23,7 @@
   <div class="market-clock">
     <button type="button" class="btn signature proposal-btn" id="open-explain" title="A plain-language report for clients without a finance background">Explain My Portfolio ↗</button>
     <button type="button" class="btn signature proposal-btn" id="open-proposal">Client Proposal ↗</button>
-    <span class="live-badge" title="Market data refreshed weekly by a scheduled pipeline">REAL DATA</span>
+    <span class="live-badge" title="Market data refreshed every weekday at 5:30 PM IST by a scheduled pipeline">REAL DATA</span>
     <span id="clock">--:--:--</span>
   </div>
 </header>
@@ -149,7 +149,7 @@
     <p class="section-intro">
       Full transparency on what this platform is built from: every instrument in the universe, the <strong>12 stocks</strong> in the
       Indian equity basket, their latest <strong>closing prices</strong>, returns, ranges, risk and correlations — all real market data,
-      refreshed every week by the pipeline. Nothing on this page is simulated.
+      refreshed every weekday evening by the pipeline. Nothing on this page is simulated.
     </p>
     <div class="snapshot-bar" id="mkt-snapshot"></div>
 
@@ -250,7 +250,8 @@
       <summary>Data dictionary &amp; sourcing</summary>
       <ul>
         <li><strong>Source.</strong> Yahoo Finance via the open-source <code>yfinance</code> library, called server-side by a GitHub Actions job — no API keys, and your browser makes no market-data calls.</li>
-        <li><strong>Refresh.</strong> Every Saturday 08:00 IST (after the US Friday close). Each instrument shows its own last close date; NSE and US markets close on different days and holidays.</li>
+        <li><strong>Refresh.</strong> Every weekday (Monday–Friday) at 5:30 PM IST, two hours after the NSE close. US funds show their most recent completed session, since the US market closes after the run; a session still in progress is never recorded as a close. Each instrument shows its own last close date; NSE and US markets close on different days and holidays. GitHub sometimes starts scheduled jobs a few hours late.</li>
+        <li><strong>Prices daily, estimation weekly.</strong> Prices, returns, VaR and charts use the latest daily closes. The optimizer's expected returns and covariances use completed Friday-to-Friday weeks only, so the efficient frontier updates once a week rather than jittering day to day.</li>
         <li><strong>Prices.</strong> Dividend- and split-adjusted closes. Bad ticks (a price that collapses and snaps back within days) are removed automatically and listed in the footer.</li>
         <li><strong>Returns.</strong> 1W/1M/3M/6M/1Y are simple returns versus the close on or before that many calendar days ago; YTD is versus the last close of the previous year; 3Y is annualized.</li>
         <li><strong>Volatility.</strong> Standard deviation of the last year's daily returns × √252. <strong>Beta</strong> = cov(stock, Nifty) / var(Nifty) on the same daily returns.</li>

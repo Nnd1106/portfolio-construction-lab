@@ -26,8 +26,24 @@ KEYS = [s["key"] for s in C.SLEEVES]
 # Estimation
 # ---------------------------------------------------------------------------
 
+def complete_weeks(df, today=None):
+    """
+    Friday-close weekly levels using completed weeks only. The pipeline runs every
+    weekday, so mid-week the last W-FRI bucket is a partial week (e.g. Fri→Wed);
+    it is dropped until its Friday has passed, keeping the optimizer's inputs on
+    true Friday-to-Friday weeks and stable through the week.
+    """
+    w = df.resample("W-FRI").last()
+    today = pd.Timestamp(today or pd.Timestamp.now(tz="Asia/Kolkata").date())
+    # complete only once its Friday has passed in IST: on a Friday-evening run the
+    # US Friday session (closes ~01:30 IST Saturday) is still missing
+    if len(w) and w.index[-1].normalize() >= today:
+        w = w.iloc[:-1]
+    return w
+
+
 def weekly_returns(panel):
-    return panel[KEYS].resample("W-FRI").last().pct_change().dropna()
+    return complete_weeks(panel[KEYS]).pct_change().dropna()
 
 
 def bayes_stein(R):

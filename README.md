@@ -56,7 +56,7 @@ The tool shares its signature look with its flagship card on the portfolio homep
 ## Architecture
 
 ```
-GitHub Actions (weekly, Sat 08:00 IST — after the US Friday close)
+GitHub Actions (weekdays 5:30 PM IST = cron "0 12 * * 1-5" — two hours after the NSE close)
   └─ pipeline/build_data.py
        ├─ fetch.py      yfinance download → bad-tick filter → fallbacks → INR conversion
        │                → daily panel on the NSE calendar (as-of alignment for US assets)
@@ -77,6 +77,7 @@ Optimization runs only in Python. The browser just selects the utility-maximizin
 
 ### Key modeling choices
 
+- **Prices daily, estimation weekly.** Data is fetched every weekday evening, but the optimizer uses completed Friday-to-Friday weeks only (a mid-week partial week is excluded), so the frontier updates once a week. Any bar from a trading session still in progress — e.g. US funds if a delayed job starts during US hours — is dropped rather than recorded as a close.
 - **Weekly returns for estimation.** NSE closes around 10:00 UTC and US markets around 20:00 UTC, so daily cross-market correlations are biased toward zero (India-vs-global equity correlation is roughly 0.30 daily vs 0.54 weekly). Means and covariances are therefore estimated from Friday-close weekly returns.
 - **Two estimation models.** *Policy* (default): Bayes-Stein shrunk means (Jorion, 1986) and a 5–50% range per sleeve, like an IPS. *Textbook*: raw sample means, long-only. The UI overlays both frontiers so the effect of estimation error is visible rather than hidden.
 - **Risk-aversion mapping.** `A = 12 · (1.5/12)^s` for a governing score `s ∈ [0, 1]`. It is log-linear because y* ∝ 1/A. This is a design calibration, not an empirically estimated scale.

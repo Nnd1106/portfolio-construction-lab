@@ -16,6 +16,7 @@ import yfinance as yf
 
 import config as C
 import fetch as F
+from analytics import complete_weeks
 
 PERIODS = {"1W": 7, "1M": 30, "3M": 91, "6M": 182, "1Y": 365}
 
@@ -213,13 +214,13 @@ def build_market(panel, basket_px, basket_meta, log):
 
     # Basket correlation matrix (weekly) and each stock's correlation with the Nifty
     tick = [b["ticker"] for b in basket_meta]
-    wk = basket_px[tick].resample("W-FRI").last().pct_change().dropna()
-    bw = panel["BENCH"].resample("W-FRI").last().pct_change().dropna()
+    wk = complete_weeks(basket_px[tick]).pct_change().dropna()
+    bw = complete_weeks(panel["BENCH"]).pct_change().dropna()
     corr = wk.corr().values
     corr_nifty = [float(wk[t].corr(bw.loc[wk.index])) for t in tick]
 
     # Rolling 52-week correlations between sleeves (weekly INR returns)
-    W = panel[[s["key"] for s in C.SLEEVES]].resample("W-FRI").last().pct_change().dropna()
+    W = complete_weeks(panel[[s["key"] for s in C.SLEEVES]]).pct_change().dropna()
     pairs = [("IN_EQ", "GL_EQ"), ("IN_EQ", "IN_GOLD"), ("IN_EQ", "IN_DEBT"), ("IN_GOLD", "GL_EQ")]
     roll = {}
     for a, b in pairs:
@@ -247,5 +248,5 @@ def build_market(panel, basket_px, basket_meta, log):
         "rolling_corr": {"window_weeks": 52, "dates": roll_dates, "pairs": roll},
         "ohlc": ohlc_block(basket_meta, cal[0]),
         "source": "Yahoo Finance via yfinance (keyless), fetched server-side by GitHub Actions",
-        "schedule": {"cron_utc": "30 2 * * 6", "label": "Every Saturday 08:00 IST"},
+        "schedule": {"cron_utc": "0 12 * * 1-5", "label": "Weekdays 5:30 PM IST"},
     }

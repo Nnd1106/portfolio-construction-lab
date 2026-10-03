@@ -395,7 +395,7 @@ const Explain = {
           <li><b>Taxes and some fees aren't included.</b> Capital-gains tax and advisory fees would reduce the numbers shown; the funds' own running costs are already reflected in their prices.</li>
           <li><b>Some money is in other currencies.</b> The worldwide investments are held in US dollars, so changes in the rupee's value move their worth up or down.</li>
           <li><b>The Indian bond fund ends in April 2030.</b> Before then the money will need to move into a similar fund.</li>
-          <li><b>Prices are updated weekly.</b> This report uses closing prices up to ${esc(fmtDate(DATA.meta.as_of))}.</li>
+          <li><b>Prices are updated every weekday evening.</b> This report uses closing prices up to ${esc(fmtDate(DATA.meta.as_of))}.</li>
         </ul>
       </section>`;
   },

@@ -21,6 +21,68 @@ warnings.filterwarnings("ignore")
 _cache = {}
 
 
+# Session close (exchange-local) + settle buffer. A bar dated "today" in the
+# exchange's own time zone is only kept once that session has closed, so a run
+# that starts late (GitHub often delays scheduled jobs by hours) never records an
+# intraday price as a close — e.g. URTH/BNDX while the US market is still open.
+SESSION_CLOSE = {
+    "Asia/Kolkata": (16, 0),        # NSE/BSE close 15:30 IST (+30 min); mutual-fund NAVs too
+    "America/New_York": (16, 15),   # NYSE close 16:00 ET (+15 min)
+}
+
+
+def drop_unfinished_session(obj):
+    """Drop the last bar if its session (exchange-local date) has not finished yet."""
+    idx = pd.to_datetime(obj.index)
+    if len(idx) == 0 or idx.tz is None:
+        return obj
+    tz = str(idx.tz)
+    now = pd.Timestamp.now(tz=idx.tz)
+    last = idx[-1]
+    if last.date() != now.date():
+        return obj
+    hh, mm = SESSION_CLOSE.get(tz, (23, 59))     # 24h markets (FX): today's bar is always partial
+    if now < now.normalize() + pd.Timedelta(hours=hh, minutes=mm):
+        print(f"  ~ dropping in-progress {last.date()} session ({tz}, now {now:%H:%M})")
+        return obj.iloc[:-1]
+    return obj
+
+
+def drop_phantom_rows(df, ticker):
+    """
+    Yahoo sometimes emits a zero-volume row on NSE holidays that repeats the
+    previous close (e.g. NIFTYBEES on 2-Oct, Gandhi Jayanti). For NSE-listed
+    tickers such rows are not trading days; mutual-fund NAVs and FX legitimately
+    report zero volume, so they are left alone.
+    """
+    if not ticker.endswith(".NS") or "Volume" not in df:
+        return df
+    # Illiquid ETFs (e.g. the Bharat Bond ETF) have genuine zero-volume days, so
+    # volume alone is not enough: a row is a phantom only if it has zero volume
+    # AND the NSE index itself did not trade that day.
+    nse_days = set(_nse_calendar())
+    if not nse_days:
+        return df
+    dates = pd.to_datetime(df.index).tz_localize(None).normalize()
+    phantom = (df["Volume"].values == 0) & ~dates.isin(nse_days)
+    return df[~phantom]
+
+
+_nse_cal = None
+
+
+def _nse_calendar():
+    """Trading days of the Nifty 50 index (^NSEI) — the authority for NSE sessions."""
+    global _nse_cal
+    if _nse_cal is None:
+        try:
+            raw = yf.Ticker("^NSEI").history(period="max", auto_adjust=True)
+            _nse_cal = pd.to_datetime(raw.index).tz_localize(None).normalize()
+        except Exception:
+            _nse_cal = pd.DatetimeIndex([])
+    return _nse_cal
+
+
 def history(ticker, retries=3):
     """Full daily adjusted-close history as a tz-naive Series (empty on failure)."""
     if ticker in _cache:
@@ -30,7 +92,7 @@ def history(ticker, retries=3):
         try:
             df = yf.Ticker(ticker).history(period="max", auto_adjust=True)
             if df is not None and not df.empty:
-                s = df["Close"].dropna()
+                s = drop_unfinished_session(drop_phantom_rows(df, ticker)["Close"].dropna())
                 s.index = pd.to_datetime(s.index).tz_localize(None).normalize()
                 s = s[~s.index.duplicated(keep="last")].sort_index()
                 s = s[s > 0]
@@ -54,7 +116,7 @@ def history_ohlc(ticker, retries=3):
         try:
             raw = yf.Ticker(ticker).history(period="max", auto_adjust=True)
             if raw is not None and not raw.empty:
-                df = raw[["Open", "High", "Low", "Close"]].dropna()
+                df = drop_unfinished_session(drop_phantom_rows(raw, ticker)[["Open", "High", "Low", "Close"]].dropna())
                 df.index = pd.to_datetime(df.index).tz_localize(None).normalize()
                 df = df[~df.index.duplicated(keep="last")].sort_index()
                 break

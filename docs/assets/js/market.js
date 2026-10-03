@@ -9,6 +9,9 @@
 
 const PAIR_COLORS = ['#9085e9', '#e66767', '#008300', INK.secondary];   // categorical slots 7, 8, 6 + neutral
 const POS_COLOR = '#3987e5', NEG_COLOR = '#e66767';                   // diverging poles for gains / losses
+// Candles use the market convention (green up / red down) — the same tokens as the
+// gain/loss cells in the tables; the legend's "Up / Down" labels carry the meaning too.
+const CANDLE_UP = '#0ca30c', CANDLE_DOWN = '#e34948';
 const UNIVERSE_ORDER = ['IN_EQ', 'IN_GOLD', 'IN_DEBT', 'GL_EQ', 'GL_BOND', 'BENCH', 'FX', 'RF'];
 const ROLE_LABEL = { sleeve: 'Sleeve', benchmark: 'Benchmark', fx: 'Currency', rf: 'Risk-free', index: 'Index', stock: 'Stock' };
 const RANGES = [['1M', 30], ['3M', 91], ['6M', 182], ['YTD', 'ytd'], ['1Y', 365], ['3Y', 1096], ['All', null]];
@@ -175,9 +178,9 @@ const Market = {
   renderSnapshot() {
     const gen = new Date(DATA.meta.generated_utc);
     const now = new Date();
-    // next scheduled run: Saturday 02:30 UTC strictly after now
-    const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 2, 30));
-    while (next.getUTCDay() !== 6 || next <= now) next.setUTCDate(next.getUTCDate() + 1);
+    // next scheduled run: 12:00 UTC (5:30 PM IST) on the next weekday, strictly after now
+    const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 12, 0));
+    while (next.getUTCDay() === 0 || next.getUTCDay() === 6 || next <= now) next.setUTCDate(next.getUTCDate() + 1);
     const ageDays = (now - gen) / 864e5;
     const hrsToNext = (next - now) / 36e5;
     const untilNext = hrsToNext < 24 ? `in ${Math.max(1, Math.round(hrsToNext))} hour${Math.round(hrsToNext) === 1 ? '' : 's'}` : `in ${Math.ceil(hrsToNext / 24)} days`;
@@ -187,14 +190,14 @@ const Market = {
     const dq = DATA.data_quality;
     const fallbacks = Object.values(dq.sleeves).filter((v) => v.fallback_used).length + (dq.benchmark.fallback_used ? 1 : 0);
     const ticks = Object.values(dq.sleeves).reduce((a, v) => a + v.dropped.length, 0) + dq.benchmark.dropped.length;
-    const fresh = ageDays < 8;
+    const fresh = ageDays < 4;    // a Friday run is followed by Monday's, plus GitHub start delays
     const tile = (label, value, sub) => `<div class="snap-tile"><div class="snap-label">${label}</div><div class="snap-value">${value}</div><div class="snap-sub">${sub}</div></div>`;
     $('mkt-snapshot').innerHTML = [
       tile('Last close · NSE', esc(fmtDate(nse)), 'Indian stocks &amp; ETFs'),
       tile('Last close · US', esc(fmtDate(us)), 'URTH, BNDX (USD)'),
       tile('Pipeline run', esc(ist(gen)), `<span class="status-chip ${fresh ? 'good' : 'warning'}">${fresh ? '✓ Fresh' : '! Stale'} · ${ageDays < 1 ? 'today' : Math.floor(ageDays) + 'd ago'}</span>`),
       tile('Next refresh', esc(ist(next)), `scheduled · ${untilNext} · GitHub often starts scheduled jobs a few hours late`),
-      tile('Models computed through', esc(fmtDate(DATA.meta.as_of)), 'last date every series has a close'),
+      tile('Models computed through', esc(fmtDate(DATA.meta.as_of)), `last date every series has a close${DATA.estimation.week_end ? ` · optimizer weeks to ${esc(fmtDate(DATA.estimation.week_end))}` : ''}`),
       tile('Coverage', `${this.M.instruments.length} instruments`, `${fallbacks ? fallbacks + ' fallback ticker(s)' : 'no fallbacks needed'} · ${ticks} bad ticks removed`),
       tile('Source', 'Yahoo Finance', 'via yfinance · keyless · server-side'),
     ].join('');
@@ -405,9 +408,8 @@ const Market = {
   /**
    * Candlestick (OHLC) chart for the selected stock on the shared period toggle.
    * 3M / 1Y use daily candles; 3Y / All use Friday-ending weekly candles (1,700
-   * daily candles would be unreadable at that width). Up candles use the tab's
-   * gain colour (blue) and down candles its loss colour (red) — the same CVD-safe
-   * diverging pair as the 1-year return chart, rather than red/green.
+   * daily candles would be unreadable at that width). Up candles are green and
+   * down candles red (market convention); the legend labels both in words.
    */
   renderCandles(i) {
     const O = this.M.ohlc;
@@ -435,8 +437,8 @@ const Market = {
       datasets: [{
         label: i.name,
         data: pts,
-        backgroundColors: { up: POS_COLOR, down: NEG_COLOR, unchanged: INK.secondary },
-        borderColors: { up: POS_COLOR, down: NEG_COLOR, unchanged: INK.secondary },
+        backgroundColors: { up: CANDLE_UP, down: CANDLE_DOWN, unchanged: INK.secondary },
+        borderColors: { up: CANDLE_UP, down: CANDLE_DOWN, unchanged: INK.secondary },
         borderWidth: 1,
       }],
     }, {
@@ -471,8 +473,8 @@ const Market = {
       },
     });
     $('mkt-candle-res').textContent = weekly ? 'weekly candles' : 'daily candles';
-    $('mkt-candle-legend').innerHTML = `<span><span class="swatch" style="background:${POS_COLOR}"></span>Up ${weekly ? 'week' : 'day'} (close above open) · ${ups}</span>
-      <span><span class="swatch" style="background:${NEG_COLOR}"></span>Down ${weekly ? 'week' : 'day'} (close below open) · ${downs}</span>
+    $('mkt-candle-legend').innerHTML = `<span><span class="swatch" style="background:${CANDLE_UP}"></span>Up ${weekly ? 'week' : 'day'} (close above open) · ${ups}</span>
+      <span><span class="swatch" style="background:${CANDLE_DOWN}"></span>Down ${weekly ? 'week' : 'day'} (close below open) · ${downs}</span>
       <span style="color:var(--text-muted)">Body = open→close · wick = high/low</span>`;
     $('mkt-candle-note').textContent = weekly
       ? `${pts.length} weekly candles (Friday-ending weeks) — daily candles are kept for the last ${O.daily_days} days and used for the 3M and 1Y views.`
